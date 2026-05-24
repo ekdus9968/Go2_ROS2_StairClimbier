@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Conda env
+.conda/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Checkpoints (large files)
+*.pkl
+*.pth
+*.onnx
+checkpoints/
+checks_*/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data
+*.npy
+plots/
+results/
+
+# Docker
