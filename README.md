@@ -36,9 +36,36 @@ See `docs/architecture.md` for details.
 git clone https://github.com/<your-id>/go2-stair-climber.git
 cd go2-stair-climber
 
-# Build Docker image
-cd docker
-docker compose build
+## Docker Image
+
+Prebuilt image available on Docker Hub:
+\`\`\`bash
+docker pull ekdus9968/go2-stair-climber:v0.2
+\`\`\`
+
+### Run with GPU and X11 (Linux/WSL2)
+\`\`\`bash
+docker run -it --rm --gpus all --network=host \
+    -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v $(pwd):/workspace/go2-stair-climber \
+    ekdus9968/go2-stair-climber:v0.2 bash
+\`\`\`
+
+### Inside container
+\`\`\`bash
+# Verify GPU
+python -c "import jax; print(jax.devices())"
+
+# Run PGTT demo
+cd /workspace/pgtt
+python deploy/deploy_heightmap.py --robot go2 --stairs --level level13 --vx 0.5
+\`\`\`
+
+### Known limitations
+- PyTorch not included (needed for `deploy_heightmap.py` only)
+- To enable deploy inside container: `pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu`
+- This will be added in future image versions
 
 # Run training environment
 docker compose run --rm pgtt-train
