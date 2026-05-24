@@ -1,2 +1,3 @@
-# Go2_ROS2_StairClimbing
-TASH Project
+# Go2 Stair Climber
+
+
