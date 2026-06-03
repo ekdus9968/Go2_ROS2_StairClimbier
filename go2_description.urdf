@@ -1,0 +1,121 @@
+<!-- Sensors and payload added for Go2 hospital assistant project -->
+
+
+  <!-- Intel RealSense D435i -->
+  <!-- Handles patient tracking and depth perception -->
+  <!-- Mounted at front of robot facing forward -->
+  <link name="d435i_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.072"/>
+      <inertia ixx="0.000003" ixy="0" ixz="0"
+               iyy="0.000003" iyz="0" izz="0.000001"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.090 0.025 0.025"/>
+      </geometry>
+      <material name="camera_black">
+        <color rgba="0.1 0.1 0.1 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.090 0.025 0.025"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Position reuses stock front_camera joint origin -->
+  <!-- Confirm exact mounting height with real robot -->
+  <joint name="d435i_joint" type="fixed">
+    <origin xyz="0.32715 -0.00003 0.04297" rpy="0 0 0"/>
+    <parent link="base"/>
+    <child link="d435i_link"/>
+  </joint>
+
+  <!-- Hesai XT16 LiDAR -->
+  <!-- 360 degree terrain mapping for PGTT heightmap -->
+  <!-- Feeds hesai_lidar_filter then pointcloud_to_grid -->
+  <!-- Must have clear 360 degree rotation plane -->
+  <link name="hesai_xt16_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.830"/>
+      <!-- r=0.0515m h=0.087m -->
+      <!-- Ixx=Iyy=(1/12)*m*(3r^2+h^2) Izz=(1/2)*m*r^2 -->
+      <inertia ixx="0.000923" ixy="0" ixz="0"
+               iyy="0.000923" iyz="0" izz="0.000441"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.0515" length="0.087"/>
+      </geometry>
+      <material name="lidar_dark">
+        <color rgba="0.2 0.2 0.2 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.0515" length="0.087"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Centered on top of body -->
+  <!-- Confirm exact position with real robot -->
+  <joint name="hesai_xt16_joint" type="fixed">
+    <origin xyz="0.0 0.0 0.114" rpy="0 0 0"/>
+    <parent link="base"/>
+    <child link="hesai_xt16_link"/>
+  </joint>
+
+  <!-- Mock oxygen tank + printed holder -->
+  <!-- Dimensions: 9.1 x 3.5 x 7.2 inches (L x W x H) -->
+  <!--           = 0.231 x 0.089 x 0.183 m             -->
+  <!-- Tank: 4.6 lb (2.087 kg)                         -->
+  <!-- Holder: 0.3 lb (0.136 kg)                       -->
+  <!-- Total: 4.9 lb (2.223 kg)                        -->
+  <!-- Sits on top of robot, rear mounted              -->
+  <!-- Kept 3.3in (0.084m) clear of LiDAR cable       -->
+  <link name="oxygen_tank_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="2.223"/>
+      <!-- box inertia: x=0.231 y=0.089 z=0.183       -->
+      <!-- Ixx=(1/12)*m*(y^2+z^2) = 0.00766           -->
+      <!-- Iyy=(1/12)*m*(x^2+z^2) = 0.01608           -->
+      <!-- Izz=(1/12)*m*(x^2+y^2) = 0.01133           -->
+      <inertia ixx="0.00766" ixy="0" ixz="0"
+               iyy="0.01608" iyz="0" izz="0.01133"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.231 0.089 0.183"/>
+      </geometry>
+      <material name="tank_green">
+        <color rgba="0.0 0.5 0.0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.231 0.089 0.183"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- x=-0.15 calculated from body rear edge (-0.1881m) -->
+  <!-- and LiDAR clearance (0.084m from x=0.0)          -->
+  <!-- z=0.1485: body half height (0.057) + tank half   -->
+  <!-- height (0.0915)                                   -->
+  <joint name="oxygen_tank_joint" type="fixed">
+    <origin xyz="-0.15 0.0 0.1485" rpy="0 0 0"/>
+    <parent link="base"/>
+    <child link="oxygen_tank_link"/>
+  </joint>
