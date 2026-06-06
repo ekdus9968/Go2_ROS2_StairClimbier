@@ -81,7 +81,7 @@
       <geom type="box" size="0.045 0.0125 0.0125" rgba="0.1 0.1 0.1 1" contype="0" conaffinity="0"/>
       </body>
       <!--Hesai XT16 LiDAR-->
-      <body name="hesai_xt16_link" pos="0 0 0.512">
+      <body name="hesai_xt16_link" pos="0 0 0.114">
       <geom type="cylinder" size="0.0515 0.0435" rgba="0.2 0.2 0.2 1" contype="0" conaffinity="0"/>
       </body>
       <!--Oxygen tank-->
