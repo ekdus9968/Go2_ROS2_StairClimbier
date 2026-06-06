@@ -1,5 +1,5 @@
 <!-- Sensors and payload added for Go2 hospital assistant project -->
-
+<body name="go2">
 
   <!-- Intel RealSense D435i -->
   <!-- Handles patient tracking and depth perception -->
@@ -119,3 +119,4 @@
     <parent link="base"/>
     <child link="oxygen_tank_link"/>
   </joint>
+</body>
