@@ -93,6 +93,7 @@
       </body>
 
      <!-- Oxygen tank -->
+     <!-- mass = 0.136 kg = 0.3 lbs-->
       <body name="oxygen_tank_link" pos="-0.045 0 0.1485">
         <inertial pos="0 0 0" mass="0.15"
                   diaginertia="0.01610 0.00767 0.01136"/>
