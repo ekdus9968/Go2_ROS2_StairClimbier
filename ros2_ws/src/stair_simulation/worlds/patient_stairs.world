@@ -1,6 +1,8 @@
-<?xml version="1.0"?>
+<?xml version="1.0" ?>
 <sdf version="1.6">
   <world name="patient_stairs">
+    
+    <!-- physics + light -->
     <include>
       <uri>model://ground_plane</uri>
     </include>
@@ -8,78 +10,145 @@
       <uri>model://sun</uri>
     </include>
     
-    <!-- 8단 계단, 환자 사양 -->
+    <physics name="default_physics" default="0" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    
+    <!-- standard stairs (8 stairs, 18cm × 28cm × 1.2m) -->
     <model name="patient_stairs">
       <static>true</static>
+      <pose>2.0 0 0 0 0 0</pose>
       
       <!-- Step 1 -->
       <link name="step1">
-        <pose>1.0 0 0.09 0 0 0</pose>
-        <collision name="col1">
-          <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
+        <pose>0 0 0.09 0 0 0</pose>
+        <collision name="col">
+          <geometry>
+            <box><size>0.28 1.2 0.18</size></box>
+          </geometry>
         </collision>
-        <visual name="vis1">
-          <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
-          <material><ambient>0.6 0.4 0.2 1</ambient></material>
+        <visual name="vis">
+          <geometry>
+            <box><size>0.28 1.2 0.18</size></box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.5 0.3 1</ambient>
+            <diffuse>0.7 0.5 0.3 1</diffuse>
+          </material>
         </visual>
       </link>
       
       <!-- Step 2 -->
       <link name="step2">
-        <pose>1.28 0 0.27 0 0 0</pose>
-        <collision name="col2">
+        <pose>0.28 0 0.27 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.28 1.2 0.18</size></box></geometry></collision>
+        <visual name="vis">
           <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
-        </collision>
-        <visual name="vis2">
-          <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
-          <material><ambient>0.6 0.4 0.2 1</ambient></material>
+          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
         </visual>
       </link>
       
       <!-- Step 3 -->
       <link name="step3">
-        <pose>1.56 0 0.45 0 0 0</pose>
-        <collision name="col3">
+        <pose>0.56 0 0.45 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.28 1.2 0.18</size></box></geometry></collision>
+        <visual name="vis">
           <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
-        </collision>
-        <visual name="vis3">
-          <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
-          <material><ambient>0.6 0.4 0.2 1</ambient></material>
+          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
         </visual>
       </link>
       
-      <!-- step4 ~ step8 추가 -->
-      <!-- 패턴: pose x += 0.28, z += 0.18 -->
+      <!-- Step 4 -->
+      <link name="step4">
+        <pose>0.84 0 0.63 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.28 1.2 0.18</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
+          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+        </visual>
+      </link>
       
+      <!-- Step 5 -->
+      <link name="step5">
+        <pose>1.12 0 0.81 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.28 1.2 0.18</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
+          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+        </visual>
+      </link>
+      
+      <!-- Step 6 -->
+      <link name="step6">
+        <pose>1.40 0 0.99 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.28 1.2 0.18</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
+          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+        </visual>
+      </link>
+      
+      <!-- Step 7 -->
+      <link name="step7">
+        <pose>1.68 0 1.17 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.28 1.2 0.18</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
+          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+        </visual>
+      </link>
+      
+      <!-- Step 8 -->
+      <link name="step8">
+        <pose>1.96 0 1.35 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.28 1.2 0.18</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.28 1.2 0.18</size></box></geometry>
+          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+        </visual>
+      </link>
     </model>
     
-    <!-- 위쪽 평면 (계단 도착점) -->
+    <!-- second floor (end of stair) -->
     <model name="top_platform">
       <static>true</static>
+      <pose>4.5 0 1.44 0 0 0</pose>
       <link name="platform">
-        <pose>3.5 0 1.44 0 0 0</pose>
         <collision name="col">
           <geometry><box><size>2.0 2.0 0.02</size></box></geometry>
         </collision>
         <visual name="vis">
           <geometry><box><size>2.0 2.0 0.02</size></box></geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
         </visual>
       </link>
     </model>
     
-    <!-- 환자 위치 마커 (단순 box) -->
-    <model name="patient_marker">
-      <pose>2.0 0 1.0 0 0 0</pose>
+    <!-- patiant placeholder (simple red box) -->
+    <model name="patient">
+      <pose>1.0 0 0.85 0 0 0</pose>
       <link name="body">
         <inertial>
-          <mass>50</mass>
+          <mass>70</mass>
+          <inertia>
+            <ixx>20.5</ixx><iyy>20.5</iyy><izz>1.5</izz>
+            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+          </inertia>
         </inertial>
         <collision name="col">
           <geometry><box><size>0.4 0.3 1.7</size></box></geometry>
         </collision>
         <visual name="vis">
           <geometry><box><size>0.4 0.3 1.7</size></box></geometry>
-          <material><ambient>1.0 0.5 0.5 1</ambient></material>
+          <material>
+            <ambient>1.0 0.3 0.3 1</ambient>
+            <diffuse>1.0 0.3 0.3 1</diffuse>
+          </material>
         </visual>
       </link>
     </model>
