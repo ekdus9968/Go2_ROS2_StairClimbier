@@ -19,13 +19,22 @@
 - MuJoCo viewer displays Go2 via WSLg
 - GPU utilization confirmed (30W power draw, P3 state)
 
-## PHASE 2 — Pretrained Policy Evaluation (in progress)
+## PHASE 2 — Pretrained Policy Evaluation ✅
 
-### Available pretrained policies (Go2)
-- `policy_go2_pgtt_level03_run0` through `level20_run0`
-- Methods: pgtt, baseline, wild
+### Method
+- Visual evaluation via `deploy/deploy_heightmap.py`
+- Run on host conda env (Docker container has JAX/PyTorch conflict issue)
 
-### Goals
-- Evaluate each policy on stair heights 1~20cm
-- Identify best baseline for our scenario (8~18cm stairs)
-- Decide which level to use for PHASE 4 fine-tuning
+### Result
+- `policy_go2_pgtt_level13_run0` confirmed working
+- Go2 climbs stairs with `--vx 0.5`
+- Detailed quantitative evaluation deferred (not blocking PHASE 3)
+
+### Decision
+- **Baseline for PHASE 4**: `policy_go2_pgtt_level13_run0`
+- Method: `pgtt`
+- Rationale: Highest difficulty among CLI-supported levels
+
+### Notes
+- `evaluate_multiple.py` requires `checks_stairs/` checkpoint format (different from `policies/`)
+- Quantitative eval will be done after PHASE 4 fine-tune

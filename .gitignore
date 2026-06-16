@@ -1,3 +1,8 @@
+# ROS2 build
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
 # Python
 __pycache__/
 *.pyc
@@ -16,6 +21,7 @@ env/
 # Logs
 *.log
 logs/
+nohup.out
 
 # Checkpoints (large files)
 *.pkl
@@ -33,4 +39,15 @@ Thumbs.db
 plots/
 results/
 
+pgtt_patches/
+
+# Large models
+*.pt
+*.pkl
+*.npy
+
 # Docker
+
+# Backup
+*.bak
+*~
