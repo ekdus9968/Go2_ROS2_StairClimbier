@@ -141,7 +141,7 @@
     <!-- Stair B: -X ori (12cm × 12, l= 28cm) -->
     <!--  +X : x=8.10 -->
     <!--  B start : x=8.10 -->
-    <!-- end 끝: x=8.10 + 12×0.28 = 11.46 -->
+    <!-- end : x=8.10 + 12×0.28 = 11.46 -->
     <!-- ============================================ -->
     <model name="stairs_B">
       <static>true</static>
@@ -525,19 +525,10 @@
     </model>
     
     <!-- patient (temp, out of view) -->
-    <model name="patient">
-      <pose>-5.0 -5.0 0.85 0 0 0</pose>
-      <link name="body">
-        <inertial><mass>70</mass>
-          <inertia><ixx>20.5</ixx><iyy>20.5</iyy><izz>1.5</izz>
-            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
-        </inertial>
-        <collision name="col"><geometry><box><size>0.4 0.3 1.7</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.4 0.3 1.7</size></box></geometry>
-          <material><ambient>1.0 0.3 0.3 1</ambient><diffuse>1.0 0.3 0.3 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-    
+    <include>
+      <name>patient</name>
+      <pose>0.5 0 0 0 0 0</pose>  <!-- 계단 앞 -->
+      <uri>model://patient</uri>
+    </include>
   </world>
 </sdf>

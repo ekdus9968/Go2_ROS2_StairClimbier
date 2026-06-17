@@ -24,8 +24,8 @@ setup(
     zip_safe=True,
     maintainer='jen',
     maintainer_email='kan.seyoung1018@gmail.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='Go2 with payload (D435i, Hesai, Oxygen tank)',
+    license='Apache-2.0',
     extras_require={
         'test': [
             'pytest',

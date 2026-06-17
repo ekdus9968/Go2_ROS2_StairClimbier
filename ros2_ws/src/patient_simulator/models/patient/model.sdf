@@ -1,0 +1,83 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="patient">
+    
+    <!-- Base link (simple mesh) -->
+    <link name="base_link">
+      <inertial>
+        <mass>60</mass>
+        <inertia>
+          <ixx>10.0</ixx>
+          <iyy>10.0</iyy>
+          <izz>1.0</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+        <pose>0 0 0.8 0 0 0</pose>  <!-- 무게중심 -->
+      </inertial>
+      
+      <!-- leg (simple box) -->
+      <visual name="legs">
+        <pose>0 0 0.45 0 0 0</pose>
+        <geometry>
+          <box><size>0.30 0.20 0.90</size></box>
+        </geometry>
+        <material>
+          <ambient>0.2 0.2 0.6 1</ambient>
+          <diffuse>0.2 0.2 0.6 1</diffuse>
+        </material>
+      </visual>
+      <collision name="legs_col">
+        <pose>0 0 0.45 0 0 0</pose>
+        <geometry>
+          <box><size>0.30 0.20 0.90</size></box>
+        </geometry>
+      </collision>
+      
+      <!-- body -->
+      <visual name="torso">
+        <pose>0 0 1.20 0 0 0</pose>
+        <geometry>
+          <box><size>0.40 0.25 0.60</size></box>
+        </geometry>
+        <material>
+          <ambient>1.0 0.5 0.5 1</ambient>
+          <diffuse>1.0 0.5 0.5 1</diffuse>
+        </material>
+      </visual>
+      <collision name="torso_col">
+        <pose>0 0 1.20 0 0 0</pose>
+        <geometry>
+          <box><size>0.40 0.25 0.60</size></box>
+        </geometry>
+      </collision>
+      
+      <!-- head -->
+      <visual name="head">
+        <pose>0 0 1.65 0 0 0</pose>
+        <geometry>
+          <sphere><radius>0.12</radius></sphere>
+        </geometry>
+        <material>
+          <ambient>0.9 0.7 0.6 1</ambient>
+          <diffuse>0.9 0.7 0.6 1</diffuse>
+        </material>
+      </visual>
+      <collision name="head_col">
+        <pose>0 0 1.65 0 0 0</pose>
+        <geometry>
+          <sphere><radius>0.12</radius></sphere>
+        </geometry>
+      </collision>
+    </link>
+    
+    <!-- Planar movement (PHASE 7: upgrade) -->
+    <plugin name="patient_move" filename="libgazebo_ros_planar_move.so">
+      <commandTopic>patient/cmd_vel</commandTopic>
+      <odometryTopic>patient/odom</odometryTopic>
+      <odometryFrame>patient/odom</odometryFrame>
+      <odometryRate>30.0</odometryRate>
+      <robotBaseFrame>base_link</robotBaseFrame>
+    </plugin>
+    
+  </model>
+</sdf>
