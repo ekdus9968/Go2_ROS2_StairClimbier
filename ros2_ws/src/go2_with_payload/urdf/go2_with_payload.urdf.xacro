@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="go2_with_payload">
+  
+  <!-- rl_sar의 Go2 base xacro include -->
+  <xacro:include filename="$(find go2_description)/xacro/robot.xacro"/>
+  
+  <!-- ===== D435i Camera ===== -->
+  <link name="d435i_link">
+    <inertial>
+      <mass value="0.072"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0" 
+               iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <box size="0.025 0.025 0.09"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0.1 0.1 0.1 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.025 0.025 0.09"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <joint name="d435i_joint" type="fixed">
+    <parent link="base"/>
+    <child link="d435i_link"/>
+    <origin xyz="0.1423 0 0.2035" rpy="0 0 0"/>
+  </joint>
+  
+  <!-- ===== Hesai XT16 LiDAR ===== -->
+  <link name="hesai_link">
+    <inertial>
+      <mass value="0.830"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" 
+               iyy="0.001" iyz="0" izz="0.0005"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <cylinder radius="0.0515" length="0.087"/>
+      </geometry>
+      <material name="dark_gray">
+        <color rgba="0.2 0.2 0.2 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.0515" length="0.087"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <joint name="hesai_joint" type="fixed">
+    <parent link="base"/>
+    <child link="hesai_link"/>
+    <origin xyz="0.1423 0 0.115" rpy="0 0 0"/>
+  </joint>
+  
+  <!-- ===== Oxygen Tank ===== -->
+  <link name="oxygen_tank_link">
+    <inertial>
+      <mass value="0.150"/>
+      <inertia ixx="0.0005" ixy="0" ixz="0" 
+               iyy="0.0005" iyz="0" izz="0.0005"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <box size="0.089 0.231 0.183"/>
+      </geometry>
+      <material name="green">
+        <color rgba="0.0 0.5 0.0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.089 0.231 0.183"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <joint name="oxygen_tank_joint" type="fixed">
+    <parent link="base"/>
+    <child link="oxygen_tank_link"/>
+    <origin xyz="-0.045 0 0.149" rpy="0 0 0"/>
+  </joint>
+  
+  <!-- ===== Sensors (Gazebo plugins) ===== -->
+  
+  <!-- D435i: RGB + Depth -->
+  <gazebo reference="d435i_link">
+    <sensor type="depth" name="d435i_sensor">
+      <update_rate>30</update_rate>
+      <camera>
+        <horizontal_fov>1.5708</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.1</near>
+          <far>10</far>
+        </clip>
+      </camera>
+      <plugin name="d435i_controller" filename="libgazebo_ros_camera.so">
+        <ros>
+          <namespace>/d435i</namespace>
+          <remapping>image_raw:=color/image_raw</remapping>
+          <remapping>image_depth:=depth/image_raw</remapping>
+          <remapping>camera_info:=color/camera_info</remapping>
+          <remapping>camera_info_depth:=depth/camera_info</remapping>
+          <remapping>points:=depth/points</remapping>
+        </ros>
+        <camera_name>d435i</camera_name>
+        <frame_name>d435i_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+  
+  <!-- Hesai LiDAR -->
+  <gazebo reference="hesai_link">
+    <sensor type="ray" name="hesai_sensor">
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>1800</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+          <vertical>
+            <samples>16</samples>
+            <resolution>1</resolution>
+            <min_angle>-0.2618</min_angle>
+            <max_angle>0.2618</max_angle>
+          </vertical>
+        </scan>
+        <range>
+          <min>0.3</min>
+          <max>30</max>
+        </range>
+      </ray>
+      <plugin name="hesai_controller" filename="libgazebo_ros_velodyne_laser.so">
+        <ros>
+          <namespace>/hesai</namespace>
+          <remapping>~/out:=points</remapping>
+        </ros>
+        <frame_name>hesai_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+  
+</robot>
