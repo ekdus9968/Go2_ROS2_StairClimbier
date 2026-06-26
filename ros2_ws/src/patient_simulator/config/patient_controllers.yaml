@@ -1,0 +1,31 @@
+/patient/controller_manager:
+  ros__parameters:
+    update_rate: 100
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    patient_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+/patient/patient_trajectory_controller:
+  ros__parameters:
+    joints:
+      - base_x_joint
+      - base_z_joint
+      - base_pitch_joint
+      - L_hip_joint
+      - L_knee_joint
+      - L_ankle_joint
+      - R_hip_joint
+      - R_knee_joint
+      - R_ankle_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
