@@ -24,14 +24,14 @@
     <!-- ============================================ -->
     <model name="top_platform">
       <static>true</static>
-      <pose>6.10 0 1.44 0 0 0</pose>
+      <pose>8.90 0 1.42 0 0 0</pose>
       <link name="platform">
         <collision name="col">
           <geometry><box><size>4.0 4.0 0.04</size></box></geometry>
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis">
-          <geometry><box><size>4.0 4.0 0.04</size></box></geometry>
+          <geometry><box><size>4.0 4.0 0.04</size></box></geometry>   <!-- 3.2 -> 4.0 -->
           <material><ambient>0.5 0.5 0.5 1</ambient><diffuse>0.5 0.5 0.5 1</diffuse></material>
         </visual>
       </link>

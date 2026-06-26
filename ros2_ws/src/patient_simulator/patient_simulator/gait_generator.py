@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Biped patient gait generator via JointTrajectoryController."""
+"""Biped patient gait generator with waypoint trajectory."""
 import sys
 import termios
 import tty
 import select
+import time
 
 import rclpy
 from rclpy.node import Node
@@ -25,22 +26,29 @@ HIP0, KNEE0, ANK0 = 0.0, 0.12, -0.12
 
 CMD_TOPIC = '/patient/patient_trajectory_controller/joint_trajectory'
 
+# Waypoint trajectory: (x, z, mode)
+# mode: 'walk' = 평지 걷기, 'climb' = 계단 오르기
+WAYPOINTS = [
+    (3.0, 0.0, 'walk'),     # 계단 앞까지
+    (8.88, 1.44, 'climb'),  # 계단 21칸 올라 2층
+    (10.0, 1.44, 'walk'),   # 2층 안쪽
+]
+
 
 class BipedGaitGenerator(Node):
     def __init__(self):
         super().__init__('biped_gait_generator')
         self.pub = self.create_publisher(JointTrajectory, CMD_TOPIC, 10)
-        self.bx = 0.0
+        self.bx = 1.0   # spawn 위치
         self.bz = STAND_HEIGHT
         self.lead = 'R'
         self.get_logger().info(
             "\nBiped Patient Teleop\n"
             "W: step fwd  S: step back\n"
             "X: stair up  Z: stair down\n"
+            "T: run waypoint trajectory\n"
             "Space: stand  P: pose  R: reset  Ctrl+C: quit\n"
         )
-        self._stood = False
-        self.create_timer(1.5, self._stand_once)
     
     def stand_pose(self):
         return {
@@ -64,13 +72,6 @@ class BipedGaitGenerator(Node):
             traj.points.append(pt)
         self.pub.publish(traj)
     
-    def _stand_once(self):
-        if self._stood:
-            return
-        self._stood = True
-        self.publish([(self.stand_pose(), 1.0)])
-        self.get_logger().info("standing")
-    
     def stand(self):
         self.publish([(self.stand_pose(), 0.6)])
     
@@ -91,6 +92,7 @@ class BipedGaitGenerator(Node):
         self.publish([(k1, 0.5), (k2, 1.0), (k3, 1.4)])
         self.lead = trail
         self.get_logger().info(f"walk {'fwd' if d>0 else 'back'} bx={self.bx:.2f}")
+        return 1.4  # 모션 시간
     
     def climb_stair(self, up=True):
         lead, trail = self.lead, ('L' if self.lead == 'R' else 'R')
@@ -114,9 +116,37 @@ class BipedGaitGenerator(Node):
         self.publish([(k1, 0.6), (k2, 1.3), (k3, 2.0), (k4, 2.6)])
         self.lead = trail
         self.get_logger().info(f"stair {'up' if up else 'down'} bx={self.bx:.2f} bz={self.bz:.2f}")
+        return 2.6
+    
+    def run_trajectory(self):
+        """Execute the full waypoint trajectory."""
+        self.get_logger().info(f"Starting waypoint trajectory from bx={self.bx:.2f}")
+        
+        for target_x, target_z, mode in WAYPOINTS:
+            self.get_logger().info(f"Target: x={target_x}, z={target_z}, mode={mode}")
+            
+            if mode == 'walk':
+                # 평지 walk — STEP_DISTANCE씩
+                while self.bx < target_x - 0.05:
+                    dx_remaining = target_x - self.bx
+                    if dx_remaining < STEP_DISTANCE:
+                        # 마지막 작은 step
+                        break
+                    duration = self.walk_step(1)
+                    time.sleep(duration + 0.1)
+                    rclpy.spin_once(self, timeout_sec=0.01)
+            
+            elif mode == 'climb':
+                # 계단 climb — STAIR_TREAD씩
+                while self.bx < target_x - 0.05 and self.bz < target_z - 0.02:
+                    duration = self.climb_stair(up=True)
+                    time.sleep(duration + 0.1)
+                    rclpy.spin_once(self, timeout_sec=0.01)
+        
+        self.get_logger().info(f"Trajectory complete! Final: bx={self.bx:.2f}, bz={self.bz:.2f}")
     
     def reset(self):
-        self.bx = 0.0
+        self.bx = 1.0
         self.bz = STAND_HEIGHT
         self.lead = 'R'
         self.publish([(self.stand_pose(), 1.0)])
@@ -146,6 +176,7 @@ class BipedGaitGenerator(Node):
             elif k == 's': self.walk_step(-1)
             elif k == 'x': self.climb_stair(True)
             elif k == 'z': self.climb_stair(False)
+            elif k == 't': self.run_trajectory()
             elif key == ' ': self.stand()
             elif k == 'p': self.print_pose()
             elif k == 'r': self.reset()
