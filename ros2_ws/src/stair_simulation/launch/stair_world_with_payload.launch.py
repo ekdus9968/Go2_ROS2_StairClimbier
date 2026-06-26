@@ -1,4 +1,7 @@
-"""Patient stairs world + Go2 with payload + configurable spawn."""
+"""Patient stairs world + Go2 with payload + configurable spawn.
+
+Uses Command(['xacro', ...]) substitution like the working nopayload version.
+"""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -14,14 +17,14 @@ def generate_launch_description():
     world_pkg = get_package_share_directory('stair_simulation')
     world_file = os.path.join(world_pkg, 'worlds', 'patient_stairs.world')
     
-    # additional sensor Go2 xacro
+    # Go2 with payload xacro
     payload_pkg = get_package_share_directory('go2_with_payload')
     xacro_file = os.path.join(payload_pkg, 'urdf', 'go2_with_payload.urdf.xacro')
     
-    # Robot description
+    # Robot description via Command substitution (same as nopayload version)
     robot_description = ParameterValue(
         Command(['xacro ', xacro_file]),
-        value_type=str
+        value_type=None
     )
     
     robot_state_publisher_node = Node(
@@ -42,7 +45,6 @@ def generate_launch_description():
         launch_arguments={'world': world_file}.items(),
     )
     
-    # Spawn arguments
     x_pos = LaunchConfiguration('x')
     y_pos = LaunchConfiguration('y')
     z_pos = LaunchConfiguration('z')
