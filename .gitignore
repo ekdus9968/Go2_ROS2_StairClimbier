@@ -51,3 +51,8 @@ pgtt_patches/
 # Backup
 *.bak
 *~
+
+
+build/
+install/
+log/
