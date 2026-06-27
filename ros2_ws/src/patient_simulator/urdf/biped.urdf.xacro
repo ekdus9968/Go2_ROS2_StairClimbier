@@ -7,15 +7,15 @@
   <xacro:property name="pelvis_h" value="0.20"/>
   <xacro:property name="pelvis_d" value="0.18"/>
   
-  <xacro:property name="thigh_length" value="0.42"/>
+  <xacro:property name="thigh_length" value="0.38"/>
   <xacro:property name="thigh_radius" value="0.08"/>
   
-  <xacro:property name="shank_length" value="0.42"/>
+  <xacro:property name="shank_length" value="0.38"/>
   <xacro:property name="shank_radius" value="0.06"/>
   
-  <xacro:property name="foot_length" value="0.25"/>
-  <xacro:property name="foot_width" value="0.12"/>
-  <xacro:property name="foot_height" value="0.05"/>
+  <xacro:property name="foot_length" value="0.20"/>
+  <xacro:property name="foot_width" value="0.09"/>
+  <xacro:property name="foot_height" value="0.04"/>
   
   <xacro:property name="hip_offset_y" value="0.10"/>
   
@@ -77,14 +77,6 @@
       <geometry><box size="${pelvis_d} ${pelvis_w} ${pelvis_h}"/></geometry>
       <material name="dark_gray"><color rgba="0.3 0.3 0.3 1"/></material>
     </visual>
-    <collision>
-      <geometry><box size="${pelvis_d} ${pelvis_w} ${pelvis_h}"/></geometry>
-    </collision>
-    <visual name="head">
-      <origin xyz="0 0 ${pelvis_h/2 + 0.15}" rpy="0 0 0"/>
-      <geometry><sphere radius="0.10"/></geometry>
-      <material name="skin"><color rgba="0.9 0.7 0.6 1"/></material>
-    </visual>
   </link>
   
   <xacro:macro name="leg" params="side reflect">
@@ -107,10 +99,6 @@
         <geometry><cylinder radius="${thigh_radius}" length="${thigh_length}"/></geometry>
         <material name="blue"><color rgba="0.2 0.2 0.7 1"/></material>
       </visual>
-      <collision>
-        <origin xyz="0 0 ${-thigh_length/2}"/>
-        <geometry><cylinder radius="${thigh_radius}" length="${thigh_length}"/></geometry>
-      </collision>
     </link>
     
     <joint name="${side}_knee_joint" type="revolute">
@@ -132,10 +120,6 @@
         <geometry><cylinder radius="${shank_radius}" length="${shank_length}"/></geometry>
         <material name="blue"/>
       </visual>
-      <collision>
-        <origin xyz="0 0 ${-shank_length/2}"/>
-        <geometry><cylinder radius="${shank_radius}" length="${shank_length}"/></geometry>
-      </collision>
     </link>
     
     <joint name="${side}_ankle_joint" type="revolute">
@@ -157,10 +141,6 @@
         <geometry><box size="${foot_length} ${foot_width} ${foot_height}"/></geometry>
         <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
       </visual>
-      <collision>
-        <origin xyz="${foot_length/4} 0 ${-foot_height/2}"/>
-        <geometry><box size="${foot_length} ${foot_width} ${foot_height}"/></geometry>
-      </collision>
     </link>
   </xacro:macro>
   

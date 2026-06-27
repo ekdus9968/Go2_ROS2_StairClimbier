@@ -29,9 +29,30 @@ CMD_TOPIC = '/patient/patient_trajectory_controller/joint_trajectory'
 # Waypoint trajectory: (x, z, mode)
 # mode: 'walk' = 평지 걷기, 'climb' = 계단 오르기
 WAYPOINTS = [
-    (3.0, 0.0, 'walk'),     # 계단 앞까지
-    (8.88, 1.44, 'climb'),  # 계단 21칸 올라 2층
-    (10.0, 1.44, 'walk'),   # 2층 안쪽
+    (0.70, 0.00, 'walk'),    # 계단 앞 (step1 앞면이 x=1.02라 그 직전)
+    (1.16, 0.07, 'climb'),   # step1
+    (1.44, 0.14, 'climb'),   # step2
+    (1.72, 0.21, 'climb'),   # step3
+    (2.00, 0.28, 'climb'),   # step4
+    (2.28, 0.35, 'climb'),   # step5
+    (2.56, 0.42, 'climb'),   # step6
+    (2.84, 0.49, 'climb'),   # step7
+    (3.12, 0.56, 'climb'),   # step8
+    (3.40, 0.63, 'climb'),   # step9
+    (3.68, 0.70, 'climb'),   # step10
+    (3.96, 0.77, 'climb'),   # step11
+    (4.24, 0.84, 'climb'),   # step12
+    (4.52, 0.91, 'climb'),   # step13
+    (4.80, 0.98, 'climb'),   # step14
+    (5.08, 1.05, 'climb'),   # step15
+    (5.36, 1.12, 'climb'),   # step16
+    (5.64, 1.19, 'climb'),   # step17
+    (5.92, 1.26, 'climb'),   # step18
+    (6.20, 1.33, 'climb'),   # step19
+    (6.48, 1.40, 'climb'),   # step20
+    (6.76, 1.44, 'climb'),   # step21 (마지막, riser 0.04)
+    (7.40, 1.44, 'walk'),    # 2층 진입 (platform 앞 가장자리 6.90 통과)
+    (10.0, 1.44, 'walk'),    # 2층 안쪽
 ]
 
 
@@ -39,7 +60,7 @@ class BipedGaitGenerator(Node):
     def __init__(self):
         super().__init__('biped_gait_generator')
         self.pub = self.create_publisher(JointTrajectory, CMD_TOPIC, 10)
-        self.bx = 1.0   # spawn 위치
+        self.bx = 0.0   # spawn 위치
         self.bz = STAND_HEIGHT
         self.lead = 'R'
         self.get_logger().info(
@@ -97,22 +118,39 @@ class BipedGaitGenerator(Node):
     def climb_stair(self, up=True):
         lead, trail = self.lead, ('L' if self.lead == 'R' else 'R')
         rise = STAIR_RISER if up else -STAIR_RISER
-        k1 = self.stand_pose()
-        self.leg(k1, lead, 0.95, 1.7, -0.30)
-        self.leg(k1, trail, -0.05, 0.25, -0.20)
-        k1['base_pitch_joint'] = 0.10
+        
+        # Phase 1: lead leg lift only (no body movement, trail planted)
+        k1 = {
+            'base_x_joint': self.bx,
+            'base_z_joint': self.bz,
+            'base_pitch_joint': 0.05,
+            f'{lead}_hip_joint': 0.95, f'{lead}_knee_joint': 1.7, f'{lead}_ankle_joint': -0.30,
+            f'{trail}_hip_joint': HIP0, f'{trail}_knee_joint': KNEE0, f'{trail}_ankle_joint': ANK0,
+        }
+        
+        # Phase 2: lead foot placed on new step, body half-shifted
+        k2 = {
+            'base_x_joint': self.bx + STAIR_TREAD * 0.3,
+            'base_z_joint': self.bz + rise * 0.5,
+            'base_pitch_joint': 0.10,
+            f'{lead}_hip_joint': 0.20, f'{lead}_knee_joint': 0.60, f'{lead}_ankle_joint': -0.40,
+            f'{trail}_hip_joint': -0.30, f'{trail}_knee_joint': 0.05, f'{trail}_ankle_joint': -0.10,
+        }
+        
+        # Phase 3: body shifts onto new step, trail leg lifts
+        k3 = {
+            'base_x_joint': self.bx + STAIR_TREAD * 0.7,
+            'base_z_joint': self.bz + rise * 0.8,
+            'base_pitch_joint': 0.05,
+            f'{lead}_hip_joint': 0.0, f'{lead}_knee_joint': KNEE0, f'{lead}_ankle_joint': ANK0,
+            f'{trail}_hip_joint': 0.85, f'{trail}_knee_joint': 1.7, f'{trail}_ankle_joint': -0.30,
+        }
+        
+        # Phase 4: full stand on new step
+        self.bx += STAIR_TREAD
         self.bz += rise
-        self.bx += STAIR_TREAD * 0.5
-        k2 = self.stand_pose()
-        self.leg(k2, lead, 0.30, 0.35, -0.20)
-        self.leg(k2, trail, -0.30, 0.35, -0.20)
-        k2['base_pitch_joint'] = 0.05
-        k3 = self.stand_pose()
-        self.leg(k3, trail, 0.85, 1.6, -0.30)
-        self.leg(k3, lead, 0.0, KNEE0, ANK0)
-        k3['base_pitch_joint'] = 0.05
-        self.bx += STAIR_TREAD * 0.5
         k4 = self.stand_pose()
+        
         self.publish([(k1, 0.6), (k2, 1.3), (k3, 2.0), (k4, 2.6)])
         self.lead = trail
         self.get_logger().info(f"stair {'up' if up else 'down'} bx={self.bx:.2f} bz={self.bz:.2f}")
@@ -126,27 +164,26 @@ class BipedGaitGenerator(Node):
             self.get_logger().info(f"Target: x={target_x}, z={target_z}, mode={mode}")
             
             if mode == 'walk':
-                # 평지 walk — STEP_DISTANCE씩
+                # 평지 walk — STEP_DISTANCE씩, 목표까지 반복
                 while self.bx < target_x - 0.05:
-                    dx_remaining = target_x - self.bx
-                    if dx_remaining < STEP_DISTANCE:
-                        # 마지막 작은 step
-                        break
                     duration = self.walk_step(1)
                     time.sleep(duration + 0.1)
                     rclpy.spin_once(self, timeout_sec=0.01)
             
             elif mode == 'climb':
-                # 계단 climb — STAIR_TREAD씩
-                while self.bx < target_x - 0.05 and self.bz < target_z - 0.02:
-                    duration = self.climb_stair(up=True)
-                    time.sleep(duration + 0.1)
-                    rclpy.spin_once(self, timeout_sec=0.01)
+                # 계단 1칸 (한 waypoint = 한 step)
+                duration = self.climb_stair(up=True)
+                time.sleep(duration + 0.1)
+                rclpy.spin_once(self, timeout_sec=0.01)
+                # 마지막 step의 riser는 0.04이지만 climb_stair는 항상 0.07 더함
+                # target_z와 self.bz 차이를 보정
+                if abs(self.bz - target_z) > 0.005:
+                    self.bz = target_z  # 강제 동기화
         
         self.get_logger().info(f"Trajectory complete! Final: bx={self.bx:.2f}, bz={self.bz:.2f}")
     
     def reset(self):
-        self.bx = 1.0
+        self.bx = 0.0
         self.bz = STAND_HEIGHT
         self.lead = 'R'
         self.publish([(self.stand_pose(), 1.0)])
