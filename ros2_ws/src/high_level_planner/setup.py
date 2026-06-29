@@ -12,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,6 +23,8 @@ setup(
         'console_scripts': [
             'state_machine_node = high_level_planner.state_machine_node:main',
             'simple_follow_node = high_level_planner.simple_follow_node:main',
+            'follow_controller_node = high_level_planner.follow_controller_node:main',
+            'odom_to_tf_node = high_level_planner.odom_to_tf_node:main',
         ],
     },
 )
