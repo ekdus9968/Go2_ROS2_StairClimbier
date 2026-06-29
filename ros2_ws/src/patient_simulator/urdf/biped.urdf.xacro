@@ -77,6 +77,26 @@
       <geometry><box size="${pelvis_d} ${pelvis_w} ${pelvis_h}"/></geometry>
       <material name="dark_gray"><color rgba="0.3 0.3 0.3 1"/></material>
     </visual>
+    <visual name="torso">
+      <origin xyz="0 0 ${pelvis_h/2 + 0.30}" rpy="0 0 0"/>
+      <geometry><box size="0.20 0.40 0.60"/></geometry>
+      <material name="torso_clr"><color rgba="0.5 0.3 0.2 1"/></material>
+    </visual>
+    <visual name="head">
+      <origin xyz="0 0 ${pelvis_h/2 + 0.75}" rpy="0 0 0"/>
+      <geometry><sphere radius="0.12"/></geometry>
+      <material name="skin"><color rgba="0.9 0.7 0.6 1"/></material>
+    </visual>
+    <visual name="left_arm">
+      <origin xyz="0 0.25 ${pelvis_h/2 + 0.30}" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.55"/></geometry>
+      <material name="arm_clr"><color rgba="0.5 0.3 0.2 1"/></material>
+    </visual>
+    <visual name="right_arm">
+      <origin xyz="0 -0.25 ${pelvis_h/2 + 0.30}" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.55"/></geometry>
+      <material name="arm_clr"/>
+    </visual>
   </link>
   
   <xacro:macro name="leg" params="side reflect">
@@ -210,4 +230,18 @@
     </plugin>
   </gazebo>
   
+
+<gazebo>
+  <plugin name="patient_p3d" filename="libgazebo_ros_p3d.so">
+    <ros>
+      <namespace>/patient</namespace>
+      <remapping>odom:=odom</remapping>
+    </ros>
+    <update_rate>50</update_rate>
+    <body_name>pelvis_link</body_name>
+    <frame_name>world</frame_name>
+    <gaussian_noise>0.0</gaussian_noise>
+  </plugin>
+</gazebo>
+
 </robot>
