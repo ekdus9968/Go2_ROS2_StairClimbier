@@ -50,7 +50,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.0700</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step2"><pose>0.4200 0 0.0700 0 0 0</pose>
@@ -58,7 +58,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.1400</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step3"><pose>0.7000 0 0.1050 0 0 0</pose>
@@ -66,7 +66,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.2100</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step4"><pose>0.9800 0 0.1400 0 0 0</pose>
@@ -74,7 +74,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.2800</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step5"><pose>1.2600 0 0.1750 0 0 0</pose>
@@ -82,7 +82,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.3500</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step6"><pose>1.5400 0 0.2100 0 0 0</pose>
@@ -90,7 +90,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.4200</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step7"><pose>1.8200 0 0.2450 0 0 0</pose>
@@ -98,7 +98,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.4900</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step8"><pose>2.1000 0 0.2800 0 0 0</pose>
@@ -106,7 +106,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.5600</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step9"><pose>2.3800 0 0.3150 0 0 0</pose>
@@ -114,7 +114,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.6300</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step10"><pose>2.6600 0 0.3500 0 0 0</pose>
@@ -122,7 +122,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.7000</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step11"><pose>2.9400 0 0.3850 0 0 0</pose>
@@ -130,7 +130,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.7700</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step12"><pose>3.2200 0 0.4200 0 0 0</pose>
@@ -138,7 +138,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.8400</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step13"><pose>3.5000 0 0.4550 0 0 0</pose>
@@ -146,7 +146,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.9100</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step14"><pose>3.7800 0 0.4900 0 0 0</pose>
@@ -154,7 +154,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 0.9800</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step15"><pose>4.0600 0 0.5250 0 0 0</pose>
@@ -162,7 +162,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 1.0500</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step16"><pose>4.3400 0 0.5600 0 0 0</pose>
@@ -170,7 +170,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 1.1200</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step17"><pose>4.6200 0 0.5950 0 0 0</pose>
@@ -178,7 +178,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 1.1900</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step18"><pose>4.9000 0 0.6300 0 0 0</pose>
@@ -186,7 +186,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 1.2600</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step19"><pose>5.1800 0 0.6650 0 0 0</pose>
@@ -194,7 +194,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 1.3300</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step20"><pose>5.4600 0 0.7000 0 0 0</pose>
@@ -202,7 +202,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 1.4000</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
       <link name="A_step21"><pose>5.7400 0 0.7200 0 0 0</pose>
@@ -210,7 +210,7 @@
           <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="vis"><geometry><box><size>0.28 4.0 1.4400</size></box></geometry>
-          <material><ambient>0.7 0.5 0.3 1</ambient><diffuse>0.7 0.5 0.3 1</diffuse></material>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/CeilingTiled</name></script></material>
         </visual>
       </link>
     </model>

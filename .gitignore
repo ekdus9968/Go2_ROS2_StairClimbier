@@ -14,6 +14,18 @@ __pycache__/
 .conda/
 env/
 
+# Trained models
+models/*.pt
+models/**/weights/
+models/**/*.pt
+models/**/*.png
+models/**/*.jpg
+models/**/*.csv
+
+# Datasets (large binary files)
+datasets/
+!datasets/.gitkeep
+
 # IDE
 .vscode/
 .idea/
@@ -52,7 +64,7 @@ pgtt_patches/
 *.bak
 *~
 
-
+# ROS2 build artifacts
 build/
 install/
 log/

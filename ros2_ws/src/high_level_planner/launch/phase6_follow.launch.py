@@ -81,7 +81,7 @@ def generate_launch_description():
         name='follow_controller',
         output='screen',
         parameters=[{
-            'follow_distance_m': 1.2,
+            'follow_distance_m': 1.54,
             'follow_tolerance_m': 0.2,
             'max_goal_rate_hz': 2.0,
         }],

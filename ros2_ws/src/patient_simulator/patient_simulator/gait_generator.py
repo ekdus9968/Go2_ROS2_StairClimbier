@@ -110,10 +110,10 @@ class BipedGaitGenerator(Node):
         k2['base_x_joint'] = self.bx + adv
         self.bx += adv
         k3 = self.stand_pose()
-        self.publish([(k1, 0.5), (k2, 1.0), (k3, 1.4)])
+        self.publish([(k1, 1.0), (k2, 2.0), (k3, 2.8)])
         self.lead = trail
         self.get_logger().info(f"walk {'fwd' if d>0 else 'back'} bx={self.bx:.2f}")
-        return 1.4  # 모션 시간
+        return 2.8  # 모션 시간 (elderly pace)
     
     def climb_stair(self, up=True):
         lead, trail = self.lead, ('L' if self.lead == 'R' else 'R')
@@ -151,10 +151,10 @@ class BipedGaitGenerator(Node):
         self.bz += rise
         k4 = self.stand_pose()
         
-        self.publish([(k1, 0.6), (k2, 1.3), (k3, 2.0), (k4, 2.6)])
+        self.publish([(k1, 1.2), (k2, 2.6), (k3, 4.0), (k4, 5.2)])
         self.lead = trail
         self.get_logger().info(f"stair {'up' if up else 'down'} bx={self.bx:.2f} bz={self.bz:.2f}")
-        return 2.6
+        return 5.2
     
     def run_trajectory(self):
         """Execute the full waypoint trajectory."""

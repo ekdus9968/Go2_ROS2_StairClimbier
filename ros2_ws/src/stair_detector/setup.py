@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'stair_detector_node = stair_detector.stair_detector_node:main',
+            'stair_geometry_verifier_node = stair_detector.stair_geometry_verifier_node:main',
         ],
     },
 )
