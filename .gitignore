@@ -38,6 +38,9 @@ Thumbs.db
 *.npy
 plots/
 results/
+datasets/
+*.pt
+models/
 
 pgtt_patches/
 

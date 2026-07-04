@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import setup
 
-package_name = 'high_level_planner'
+package_name = 'person_detector'
 
 setup(
     name=package_name,
@@ -12,19 +12,17 @@ setup(
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
-        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='jen',
-    description='State machine and follow controller',
+    description='Person detection',
     license='Apache-2.0',
     entry_points={
         'console_scripts': [
-            'state_machine_node = high_level_planner.state_machine_node:main',
-            'simple_follow_node = high_level_planner.simple_follow_node:main',
-            'follow_controller_node = high_level_planner.follow_controller_node:main',
-            'odom_to_tf_node = high_level_planner.odom_to_tf_node:main',
+            'person_detector_node = person_detector.person_detector_node:main',
+            'fake_detector_node = person_detector.fake_detector_node:main',
+            'gt_publisher_node = person_detector.gt_publisher_node:main',
         ],
     },
 )
