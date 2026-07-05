@@ -151,4 +151,18 @@
   </gazebo>
   
 
+
+<gazebo>
+  <plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
+    <ros>
+      <namespace>/</namespace>
+      <remapping>odom:=odom</remapping>
+    </ros>
+    <update_rate>50</update_rate>
+    <body_name>base</body_name>
+    <frame_name>world</frame_name>
+    <gaussian_noise>0.0</gaussian_noise>
+  </plugin>
+</gazebo>
+
 </robot>
