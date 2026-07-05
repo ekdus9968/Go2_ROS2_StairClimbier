@@ -1,105 +1,156 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="biped_patient">
-  
+
   <xacro:property name="ctrl_yaml" value="/workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/config/patient_controllers.yaml"/>
-  
+
   <xacro:property name="pelvis_w" value="0.30"/>
   <xacro:property name="pelvis_h" value="0.20"/>
   <xacro:property name="pelvis_d" value="0.18"/>
-  
+
   <xacro:property name="thigh_length" value="0.38"/>
   <xacro:property name="thigh_radius" value="0.08"/>
-  
+
   <xacro:property name="shank_length" value="0.38"/>
   <xacro:property name="shank_radius" value="0.06"/>
-  
+
   <xacro:property name="foot_length" value="0.20"/>
   <xacro:property name="foot_width" value="0.09"/>
   <xacro:property name="foot_height" value="0.04"/>
-  
+
   <xacro:property name="hip_offset_y" value="0.10"/>
-  
+
+  <!-- mesh 파일 스케일 필요시 여기서 한번에 조정 -->
+  <xacro:property name="mesh_scale" value="1 1 1"/>
+
   <xacro:macro name="box_inertia" params="m x y z">
     <inertia ixx="${m*(y*y+z*z)/12}" ixy="0" ixz="0"
              iyy="${m*(x*x+z*z)/12}" iyz="0"
              izz="${m*(x*x+y*y)/12}"/>
   </xacro:macro>
-  
+
   <xacro:macro name="cylinder_inertia" params="m r l">
     <inertia ixx="${m*(3*r*r+l*l)/12}" ixy="0" ixz="0"
              iyy="${m*(3*r*r+l*l)/12}" iyz="0"
              izz="${m*r*r/2}"/>
   </xacro:macro>
-  
+
   <link name="world"/>
-  
+
   <link name="base_x_link">
     <inertial>
       <mass value="0.001"/>
       <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
     </inertial>
   </link>
-  
+
   <joint name="base_x_joint" type="prismatic">
     <parent link="world"/>
     <child link="base_x_link"/>
     <axis xyz="1 0 0"/>
     <limit lower="-100" upper="100" effort="10000" velocity="5"/>
   </joint>
-  
+
   <link name="base_z_link">
     <inertial>
       <mass value="0.001"/>
       <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
     </inertial>
   </link>
-  
+
   <joint name="base_z_joint" type="prismatic">
     <parent link="base_x_link"/>
     <child link="base_z_link"/>
     <axis xyz="0 0 1"/>
     <limit lower="0" upper="5" effort="10000" velocity="5"/>
   </joint>
-  
+
   <joint name="base_pitch_joint" type="revolute">
     <parent link="base_z_link"/>
     <child link="pelvis_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-0.5" upper="0.5" effort="10000" velocity="5"/>
   </joint>
-  
+
   <link name="pelvis_link">
     <inertial>
       <mass value="10.0"/>
       <xacro:box_inertia m="10.0" x="${pelvis_d}" y="${pelvis_w}" z="${pelvis_h}"/>
     </inertial>
     <visual>
+      <geometry>
+        <mesh filename="package://patient_simulator/meshes/pelvis.dae" scale="${mesh_scale}"/>
+      </geometry>
+    </visual>
+    <collision>
       <geometry><box size="${pelvis_d} ${pelvis_w} ${pelvis_h}"/></geometry>
-      <material name="dark_gray"><color rgba="0.3 0.3 0.3 1"/></material>
-    </visual>
-    <visual name="torso">
-      <origin xyz="0 0 ${pelvis_h/2 + 0.30}" rpy="0 0 0"/>
-      <geometry><box size="0.20 0.40 0.60"/></geometry>
-      <material name="torso_clr"><color rgba="0.5 0.3 0.2 1"/></material>
-    </visual>
-    <visual name="head">
-      <origin xyz="0 0 ${pelvis_h/2 + 0.75}" rpy="0 0 0"/>
-      <geometry><sphere radius="0.12"/></geometry>
-      <material name="skin"><color rgba="0.9 0.7 0.6 1"/></material>
-    </visual>
-    <visual name="left_arm">
-      <origin xyz="0 0.25 ${pelvis_h/2 + 0.30}" rpy="0 0 0"/>
-      <geometry><cylinder radius="0.05" length="0.55"/></geometry>
-      <material name="arm_clr"><color rgba="0.5 0.3 0.2 1"/></material>
-    </visual>
-    <visual name="right_arm">
-      <origin xyz="0 -0.25 ${pelvis_h/2 + 0.30}" rpy="0 0 0"/>
-      <geometry><cylinder radius="0.05" length="0.55"/></geometry>
-      <material name="arm_clr"/>
+    </collision>
+  </link>
+
+  <!-- ===== 상체 (장식용, fixed joint - 움직이지 않음) ===== -->
+
+  <joint name="torso_joint" type="fixed">
+    <parent link="pelvis_link"/>
+    <child link="torso_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="torso_link">
+    <visual>
+      <geometry><mesh filename="package://patient_simulator/meshes/torso_link.dae" scale="${mesh_scale}"/></geometry>
     </visual>
   </link>
-  
-  <xacro:macro name="leg" params="side reflect">
+
+  <xacro:macro name="arm" params="side reflect side_full">
+    <joint name="${side}_shoulder_pitch_joint" type="fixed">
+      <parent link="torso_link"/>
+      <child link="${side}_shoulder_pitch_link"/>
+      <origin xyz="0.0055 ${reflect*0.15535} 0.42999" rpy="${reflect*0.43633} 0 0"/>
+    </joint>
+    <link name="${side}_shoulder_pitch_link">
+      <visual>
+        <geometry><mesh filename="package://patient_simulator/meshes/${side_full}_shoulder_pitch_link.dae" scale="${mesh_scale}"/></geometry>
+      </visual>
+    </link>
+
+    <joint name="${side}_shoulder_roll_joint" type="fixed">
+      <parent link="${side}_shoulder_pitch_link"/>
+      <child link="${side}_shoulder_roll_link"/>
+      <origin xyz="-0.0055 ${reflect*0.0565} -0.0165" rpy="${-reflect*0.43633} 0 0"/>
+    </joint>
+    <link name="${side}_shoulder_roll_link">
+      <visual>
+        <geometry><mesh filename="package://patient_simulator/meshes/${side_full}_shoulder_roll_link.dae" scale="${mesh_scale}"/></geometry>
+      </visual>
+    </link>
+
+    <joint name="${side}_shoulder_yaw_joint" type="fixed">
+      <parent link="${side}_shoulder_roll_link"/>
+      <child link="${side}_shoulder_yaw_link"/>
+      <origin xyz="0 0 -0.1343" rpy="0 0 0"/>
+    </joint>
+    <link name="${side}_shoulder_yaw_link">
+      <visual>
+        <geometry><mesh filename="package://patient_simulator/meshes/${side_full}_shoulder_yaw_link.dae" scale="${mesh_scale}"/></geometry>
+      </visual>
+    </link>
+
+    <joint name="${side}_elbow_joint" type="fixed">
+      <parent link="${side}_shoulder_yaw_link"/>
+      <child link="${side}_elbow_link"/>
+      <origin xyz="0.0185 0 -0.198" rpy="0 0 0"/>
+    </joint>
+    <link name="${side}_elbow_link">
+      <visual>
+        <geometry><mesh filename="package://patient_simulator/meshes/${side_full}_elbow_link.dae" scale="${mesh_scale}"/></geometry>
+      </visual>
+    </link>
+  </xacro:macro>
+
+  <xacro:arm side="L" reflect="1" side_full="left"/>
+  <xacro:arm side="R" reflect="-1" side_full="right"/>
+
+  <!-- ===== 다리 (실제 움직이는 부분) ===== -->
+
+  <xacro:macro name="leg" params="side reflect side_full">
     <joint name="${side}_hip_joint" type="revolute">
       <parent link="pelvis_link"/>
       <child link="${side}_thigh_link"/>
@@ -107,7 +158,7 @@
       <axis xyz="0 1 0"/>
       <limit lower="-1.57" upper="1.57" effort="200" velocity="5"/>
     </joint>
-    
+
     <link name="${side}_thigh_link">
       <inertial>
         <origin xyz="0 0 ${-thigh_length/2}"/>
@@ -115,12 +166,16 @@
         <xacro:cylinder_inertia m="5.0" r="${thigh_radius}" l="${thigh_length}"/>
       </inertial>
       <visual>
+        <geometry>
+          <mesh filename="package://patient_simulator/meshes/${side_full}_hip_pitch_link.dae" scale="${mesh_scale}"/>
+        </geometry>
+      </visual>
+      <collision>
         <origin xyz="0 0 ${-thigh_length/2}"/>
         <geometry><cylinder radius="${thigh_radius}" length="${thigh_length}"/></geometry>
-        <material name="blue"><color rgba="0.2 0.2 0.7 1"/></material>
-      </visual>
+      </collision>
     </link>
-    
+
     <joint name="${side}_knee_joint" type="revolute">
       <parent link="${side}_thigh_link"/>
       <child link="${side}_shank_link"/>
@@ -128,7 +183,7 @@
       <axis xyz="0 1 0"/>
       <limit lower="0" upper="2.5" effort="200" velocity="5"/>
     </joint>
-    
+
     <link name="${side}_shank_link">
       <inertial>
         <origin xyz="0 0 ${-shank_length/2}"/>
@@ -136,12 +191,16 @@
         <xacro:cylinder_inertia m="3.0" r="${shank_radius}" l="${shank_length}"/>
       </inertial>
       <visual>
+        <geometry>
+          <mesh filename="package://patient_simulator/meshes/${side_full}_knee_link.dae" scale="${mesh_scale}"/>
+        </geometry>
+      </visual>
+      <collision>
         <origin xyz="0 0 ${-shank_length/2}"/>
         <geometry><cylinder radius="${shank_radius}" length="${shank_length}"/></geometry>
-        <material name="blue"/>
-      </visual>
+      </collision>
     </link>
-    
+
     <joint name="${side}_ankle_joint" type="revolute">
       <parent link="${side}_shank_link"/>
       <child link="${side}_foot_link"/>
@@ -149,7 +208,7 @@
       <axis xyz="0 1 0"/>
       <limit lower="-0.7" upper="0.7" effort="100" velocity="5"/>
     </joint>
-    
+
     <link name="${side}_foot_link">
       <inertial>
         <origin xyz="${foot_length/4} 0 ${-foot_height/2}"/>
@@ -157,16 +216,20 @@
         <xacro:box_inertia m="1.0" x="${foot_length}" y="${foot_width}" z="${foot_height}"/>
       </inertial>
       <visual>
+        <geometry>
+          <mesh filename="package://patient_simulator/meshes/${side_full}_ankle_link.dae" scale="${mesh_scale}"/>
+        </geometry>
+      </visual>
+      <collision>
         <origin xyz="${foot_length/4} 0 ${-foot_height/2}"/>
         <geometry><box size="${foot_length} ${foot_width} ${foot_height}"/></geometry>
-        <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
-      </visual>
+      </collision>
     </link>
   </xacro:macro>
-  
-  <xacro:leg side="L" reflect="1"/>
-  <xacro:leg side="R" reflect="-1"/>
-  
+
+  <xacro:leg side="L" reflect="1" side_full="left"/>
+  <xacro:leg side="R" reflect="-1" side_full="right"/>
+
   <ros2_control name="PatientGazeboSystem" type="system">
     <hardware>
       <plugin>gazebo_ros2_control/GazeboSystem</plugin>
@@ -217,7 +280,7 @@
       <state_interface name="velocity"/>
     </joint>
   </ros2_control>
-  
+
   <gazebo>
     <plugin filename="libgazebo_ros2_control.so" name="patient_gazebo_ros2_control">
       <ros>
@@ -229,19 +292,5 @@
       <robot_param_node>patient_state_publisher</robot_param_node>
     </plugin>
   </gazebo>
-  
-
-<gazebo>
-  <plugin name="patient_p3d" filename="libgazebo_ros_p3d.so">
-    <ros>
-      <namespace>/patient</namespace>
-      <remapping>odom:=odom</remapping>
-    </ros>
-    <update_rate>50</update_rate>
-    <body_name>pelvis_link</body_name>
-    <frame_name>world</frame_name>
-    <gaussian_noise>0.0</gaussian_noise>
-  </plugin>
-</gazebo>
 
 </robot>
