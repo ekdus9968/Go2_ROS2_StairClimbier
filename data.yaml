@@ -1,0 +1,5 @@
+train: /Users/laraylopez/Desktop/My First Project.yolov11/images/train
+val: /Users/laraylopez/Desktop/My First Project.yolov11/images/val
+
+nc: 1
+names: ['stairs']
