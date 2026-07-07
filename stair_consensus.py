@@ -1,51 +1,4 @@
-#!/usr/bin/env python3
-"""
-stair_consensus.py
 
-Sits in front of fusion_stair.py and yolo_stair_detector.py. Treats each of
-their outputs as one vote and decides a 3-state robot mode. Does not control
-robot motion - classification only.
-
-  Vote A - fusion_stair.py's output. Already its own internal consensus
-           (lidar + camera both agree AND within trigger_distance_m), so
-           a "yes" here is already a strong signal.
-  Vote B - yolo_stair_detector.py's output. Your custom-trained model's
-           yes/no vote. Its distance is always -1.0 (no real depth), so
-           it's only used for the vote, never for distance.
-
-  both agree      -> STAIR_MODE
-  only one agrees -> APPROACH_MODE
-  neither         -> NONE
-
-*** TOPIC COLLISION NOTE ***
-fusion_stair.py publishes to /stair_detected and /stair_distance - the same
-names this node needs for its OWN final output. Remap fusion_stair.py's
-topics at launch:
-
-  ros2 run stair_detector fusion_stair --ros-args \
-    -r /stair_detected:=/fusion/stair_detected \
-    -r /stair_distance:=/fusion/stair_distance
-
-  ros2 run stair_detector yolo_stair_detector
-
-  ros2 run stair_detector stair_consensus
-
-  ros2 topic echo /stair/robot_mode
-  ros2 topic echo /stair_distance
-
-Subscribes:
-  /fusion/stair_detected     std_msgs/Bool
-  /fusion/stair_distance     std_msgs/Float32
-  /stair/yolo_detected       std_msgs/Bool
-
-Publishes:
-  /stair/robot_mode          std_msgs/String  ('STAIR_MODE'|'APPROACH_MODE'|'NONE')
-  /stair_distance            std_msgs/Float32  (meters, -1 if not available)
-
-NOTE: named /stair/robot_mode (not /robot_mode) to avoid colliding with the
-high_level_planner package's state_machine_node, which may eventually own
-/robot_mode using the RobotMode.msg custom type once it's built out for real.
-"""
 
 import math
 import rclpy
@@ -99,9 +52,9 @@ class StairConsensus(Node):
         agree_count = int(self.fusion_detected) + int(self.yolo_detected)
 
         if agree_count == 2:
-            mode = 'STAIR_MODE'
+            mode = 'STAIR'
         elif agree_count == 1:
-            mode = 'APPROACH_MODE'
+            mode = 'APPROACH'
         else:
             mode = 'NONE'
 
