@@ -71,3 +71,6 @@ pgtt_patches/
 build/
 install/
 log/
+
+*.png
+*.jpg

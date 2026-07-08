@@ -1,40 +1,18 @@
 services:
-  pgtt-train:
+  go2_stair_climber:
     build:
       context: .
       dockerfile: Dockerfile
-    image: go2-stair-climber:latest
-    container_name: pgtt-train
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=all
-      - DISPLAY=${DISPLAY:-:0}
-      - JAX_PLATFORMS=cuda
-      - XLA_PYTHON_CLIENT_PREALLOCATE=false
-      - XLA_PYTHON_CLIENT_MEM_FRACTION=0.7
-    volumes:
-      - ../:/workspace/go2-stair-climber
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ${HOME}/.Xauthority:/root/.Xauthority:ro
+    image: go2_stair_climber:humble
+    container_name: tash_team1_go2_stair_climber
     network_mode: host
+    privileged: true
     stdin_open: true
     tty: true
-    working_dir: /workspace/go2-stair-climber
-
-  ros2-stack:
-    image: osrf/ros:humble-desktop-full
-    container_name: ros2-stack
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - DISPLAY=${DISPLAY:-:0}
-      - ROS_DOMAIN_ID=42
     volumes:
-      - ../ros2_ws:/workspace/ros2_ws
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    network_mode: host
-    stdin_open: true
-    tty: true
-    working_dir: /workspace/ros2_ws
+      - ../ros2_ws/src:/workspace/go2-stair-climber/ros2_ws/src
+      - /dev:/dev
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_DOMAIN_ID=0
     command: bash

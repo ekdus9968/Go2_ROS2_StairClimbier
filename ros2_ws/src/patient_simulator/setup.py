@@ -20,6 +20,8 @@ setup(
             glob('config/*.yaml')),
         (os.path.join('share', package_name, 'launch'),
             glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, 'meshes', 'h1'),
+            glob('meshes/h1/*.dae') + glob('meshes/h1/*.STL')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

@@ -1,236 +1,299 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="biped_patient">
 
-  <xacro:property name="ctrl_yaml" value="/workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/config/patient_controllers.yaml"/>
-
-  <xacro:property name="pelvis_w" value="0.30"/>
-  <xacro:property name="pelvis_h" value="0.20"/>
-  <xacro:property name="pelvis_d" value="0.18"/>
-
-  <xacro:property name="thigh_length" value="0.38"/>
-  <xacro:property name="thigh_radius" value="0.08"/>
-
-  <xacro:property name="shank_length" value="0.38"/>
-  <xacro:property name="shank_radius" value="0.06"/>
-
-  <xacro:property name="foot_length" value="0.20"/>
-  <xacro:property name="foot_width" value="0.09"/>
-  <xacro:property name="foot_height" value="0.04"/>
-
-  <xacro:property name="hip_offset_y" value="0.10"/>
-
-  <!-- mesh 파일 스케일 필요시 여기서 한번에 조정 -->
-  <xacro:property name="mesh_scale" value="1 1 1"/>
-
-  <xacro:macro name="box_inertia" params="m x y z">
-    <inertia ixx="${m*(y*y+z*z)/12}" ixy="0" ixz="0"
-             iyy="${m*(x*x+z*z)/12}" iyz="0"
-             izz="${m*(x*x+y*y)/12}"/>
-  </xacro:macro>
-
-  <xacro:macro name="cylinder_inertia" params="m r l">
-    <inertia ixx="${m*(3*r*r+l*l)/12}" ixy="0" ixz="0"
-             iyy="${m*(3*r*r+l*l)/12}" iyz="0"
-             izz="${m*r*r/2}"/>
-  </xacro:macro>
+  <material name="dark_gray"><color rgba="0.3 0.3 0.3 1"/></material>
+  <material name="skin"><color rgba="0.9 0.75 0.65 1"/></material>
+  <material name="shirt"><color rgba="0.2 0.4 0.7 1"/></material>
+  <material name="pants"><color rgba="0.15 0.15 0.35 1"/></material>
+  <material name="shoes"><color rgba="0.4 0.3 0.2 1"/></material>
 
   <link name="world"/>
 
   <link name="base_x_link">
     <inertial>
       <mass value="0.001"/>
-      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
     </inertial>
   </link>
-
   <joint name="base_x_joint" type="prismatic">
     <parent link="world"/>
     <child link="base_x_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <axis xyz="1 0 0"/>
-    <limit lower="-100" upper="100" effort="10000" velocity="5"/>
+    <limit lower="-100.0" upper="100.0" effort="1000" velocity="10"/>
   </joint>
 
   <link name="base_z_link">
     <inertial>
       <mass value="0.001"/>
-      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
     </inertial>
   </link>
-
   <joint name="base_z_joint" type="prismatic">
     <parent link="base_x_link"/>
     <child link="base_z_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
-    <limit lower="0" upper="5" effort="10000" velocity="5"/>
-  </joint>
-
-  <joint name="base_pitch_joint" type="revolute">
-    <parent link="base_z_link"/>
-    <child link="pelvis_link"/>
-    <axis xyz="0 1 0"/>
-    <limit lower="-0.5" upper="0.5" effort="10000" velocity="5"/>
+    <limit lower="-2.0" upper="10.0" effort="1000" velocity="10"/>
   </joint>
 
   <link name="pelvis_link">
     <inertial>
-      <mass value="10.0"/>
-      <xacro:box_inertia m="10.0" x="${pelvis_d}" y="${pelvis_w}" z="${pelvis_h}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="5.983"/>
+      <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.05"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/pelvis.STL"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="base_pitch_joint" type="revolute">
+    <parent link="base_z_link"/>
+    <child link="pelvis_link"/>
+    <origin xyz="0 0 1.06" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="1000" velocity="10"/>
+  </joint>
+
+  <link name="L_thigh_link">
+    <inertial>
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <mass value="4.953"/>
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.01"/>
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://patient_simulator/meshes/pelvis.dae" scale="${mesh_scale}"/>
+        <mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/left_hip_pitch_link.STL"/>
       </geometry>
     </visual>
-    <collision>
-      <geometry><box size="${pelvis_d} ${pelvis_w} ${pelvis_h}"/></geometry>
-    </collision>
   </link>
+  <joint name="L_hip_joint" type="revolute">
+    <parent link="pelvis_link"/>
+    <child link="L_thigh_link"/>
+    <origin xyz="0.039468 0.20286 -0.1742" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.75" upper="1.75" effort="200" velocity="23"/>
+  </joint>
 
-  <!-- ===== 상체 (장식용, fixed joint - 움직이지 않음) ===== -->
+  <link name="L_shank_link">
+    <inertial>
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <mass value="2.0"/>
+      <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/left_knee_link.STL"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="L_knee_joint" type="revolute">
+    <parent link="L_thigh_link"/>
+    <child link="L_shank_link"/>
+    <origin xyz="0 0 -0.4" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0" upper="2.05" effort="300" velocity="14"/>
+  </joint>
 
+  <link name="L_foot_link">
+    <inertial>
+      <origin xyz="0.05 0 -0.02" rpy="0 0 0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/left_ankle_link.STL"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="L_ankle_joint" type="revolute">
+    <parent link="L_shank_link"/>
+    <child link="L_foot_link"/>
+    <origin xyz="0 0 -0.4" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.87" upper="0.52" effort="40" velocity="9"/>
+  </joint>
+
+  <link name="R_thigh_link">
+    <inertial>
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <mass value="4.953"/>
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/right_hip_pitch_link.STL"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="R_hip_joint" type="revolute">
+    <parent link="pelvis_link"/>
+    <child link="R_thigh_link"/>
+    <origin xyz="0.039468 -0.20286 -0.1742" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.75" upper="1.75" effort="200" velocity="23"/>
+  </joint>
+
+  <link name="R_shank_link">
+    <inertial>
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <mass value="2.0"/>
+      <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/right_knee_link.STL"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="R_knee_joint" type="revolute">
+    <parent link="R_thigh_link"/>
+    <child link="R_shank_link"/>
+    <origin xyz="0 0 -0.4" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0" upper="2.05" effort="300" velocity="14"/>
+  </joint>
+
+  <link name="R_foot_link">
+    <inertial>
+      <origin xyz="0.05 0 -0.02" rpy="0 0 0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/right_ankle_link.STL"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="R_ankle_joint" type="revolute">
+    <parent link="R_shank_link"/>
+    <child link="R_foot_link"/>
+    <origin xyz="0 0 -0.4" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.87" upper="0.52" effort="40" velocity="9"/>
+  </joint>
+
+  <link name="torso_link">
+    <inertial>
+      <origin xyz="0 0 0.2" rpy="0 0 0"/>
+      <mass value="15.0"/>
+      <inertia ixx="0.3" ixy="0" ixz="0" iyy="0.3" iyz="0" izz="0.1"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/torso_link.STL"/>
+      </geometry>
+    </visual>
+  </link>
   <joint name="torso_joint" type="fixed">
     <parent link="pelvis_link"/>
     <child link="torso_link"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 -0.25" rpy="0 0 0"/>
   </joint>
-  <link name="torso_link">
+
+  <link name="L_shoulder_pitch_link">
     <visual>
-      <geometry><mesh filename="package://patient_simulator/meshes/torso_link.dae" scale="${mesh_scale}"/></geometry>
+      <geometry><mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/left_shoulder_pitch_link.STL"/></geometry>
     </visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
   </link>
+  <joint name="L_shoulder_pitch_joint" type="fixed">
+    <parent link="torso_link"/>
+    <child link="L_shoulder_pitch_link"/>
+    <origin xyz="0.0055 0.15535 0.42999" rpy="0.43633 0 0"/>
+  </joint>
 
-  <xacro:macro name="arm" params="side reflect side_full">
-    <joint name="${side}_shoulder_pitch_joint" type="fixed">
-      <parent link="torso_link"/>
-      <child link="${side}_shoulder_pitch_link"/>
-      <origin xyz="0.0055 ${reflect*0.15535} 0.42999" rpy="${reflect*0.43633} 0 0"/>
-    </joint>
-    <link name="${side}_shoulder_pitch_link">
-      <visual>
-        <geometry><mesh filename="package://patient_simulator/meshes/${side_full}_shoulder_pitch_link.dae" scale="${mesh_scale}"/></geometry>
-      </visual>
-    </link>
+  <link name="L_shoulder_roll_link">
+    <visual>
+      <geometry><mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/left_shoulder_roll_link.STL"/></geometry>
+    </visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="L_shoulder_roll_joint" type="fixed">
+    <parent link="L_shoulder_pitch_link"/>
+    <child link="L_shoulder_roll_link"/>
+    <origin xyz="-0.0055 0.0565 -0.0165" rpy="-0.43633 0 0"/>
+  </joint>
 
-    <joint name="${side}_shoulder_roll_joint" type="fixed">
-      <parent link="${side}_shoulder_pitch_link"/>
-      <child link="${side}_shoulder_roll_link"/>
-      <origin xyz="-0.0055 ${reflect*0.0565} -0.0165" rpy="${-reflect*0.43633} 0 0"/>
-    </joint>
-    <link name="${side}_shoulder_roll_link">
-      <visual>
-        <geometry><mesh filename="package://patient_simulator/meshes/${side_full}_shoulder_roll_link.dae" scale="${mesh_scale}"/></geometry>
-      </visual>
-    </link>
+  <link name="L_shoulder_yaw_link">
+    <visual>
+      <geometry><mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/left_shoulder_yaw_link.STL"/></geometry>
+    </visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="L_shoulder_yaw_joint" type="fixed">
+    <parent link="L_shoulder_roll_link"/>
+    <child link="L_shoulder_yaw_link"/>
+    <origin xyz="0 0 -0.1343" rpy="0 0 0"/>
+  </joint>
 
-    <joint name="${side}_shoulder_yaw_joint" type="fixed">
-      <parent link="${side}_shoulder_roll_link"/>
-      <child link="${side}_shoulder_yaw_link"/>
-      <origin xyz="0 0 -0.1343" rpy="0 0 0"/>
-    </joint>
-    <link name="${side}_shoulder_yaw_link">
-      <visual>
-        <geometry><mesh filename="package://patient_simulator/meshes/${side_full}_shoulder_yaw_link.dae" scale="${mesh_scale}"/></geometry>
-      </visual>
-    </link>
+  <link name="L_elbow_link">
+    <visual>
+      <geometry><mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/left_elbow_link.STL"/></geometry>
+    </visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="L_elbow_joint" type="fixed">
+    <parent link="L_shoulder_yaw_link"/>
+    <child link="L_elbow_link"/>
+    <origin xyz="0.0185 0 -0.198" rpy="0 0 0"/>
+  </joint>
 
-    <joint name="${side}_elbow_joint" type="fixed">
-      <parent link="${side}_shoulder_yaw_link"/>
-      <child link="${side}_elbow_link"/>
-      <origin xyz="0.0185 0 -0.198" rpy="0 0 0"/>
-    </joint>
-    <link name="${side}_elbow_link">
-      <visual>
-        <geometry><mesh filename="package://patient_simulator/meshes/${side_full}_elbow_link.dae" scale="${mesh_scale}"/></geometry>
-      </visual>
-    </link>
-  </xacro:macro>
+  <link name="R_shoulder_pitch_link">
+    <visual>
+      <geometry><mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/right_shoulder_pitch_link.STL"/></geometry>
+    </visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="R_shoulder_pitch_joint" type="fixed">
+    <parent link="torso_link"/>
+    <child link="R_shoulder_pitch_link"/>
+    <origin xyz="0.0055 -0.15535 0.42999" rpy="-0.43633 0 0"/>
+  </joint>
 
-  <xacro:arm side="L" reflect="1" side_full="left"/>
-  <xacro:arm side="R" reflect="-1" side_full="right"/>
+  <link name="R_shoulder_roll_link">
+    <visual>
+      <geometry><mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/right_shoulder_roll_link.STL"/></geometry>
+    </visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="R_shoulder_roll_joint" type="fixed">
+    <parent link="R_shoulder_pitch_link"/>
+    <child link="R_shoulder_roll_link"/>
+    <origin xyz="-0.0055 -0.0565 -0.0165" rpy="0.43633 0 0"/>
+  </joint>
 
-  <!-- ===== 다리 (실제 움직이는 부분) ===== -->
+  <link name="R_shoulder_yaw_link">
+    <visual>
+      <geometry><mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/right_shoulder_yaw_link.STL"/></geometry>
+    </visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="R_shoulder_yaw_joint" type="fixed">
+    <parent link="R_shoulder_roll_link"/>
+    <child link="R_shoulder_yaw_link"/>
+    <origin xyz="0 0 -0.1343" rpy="0 0 0"/>
+  </joint>
 
-  <xacro:macro name="leg" params="side reflect side_full">
-    <joint name="${side}_hip_joint" type="revolute">
-      <parent link="pelvis_link"/>
-      <child link="${side}_thigh_link"/>
-      <origin xyz="0 ${reflect * hip_offset_y} ${-pelvis_h/2}" rpy="0 0 0"/>
-      <axis xyz="0 1 0"/>
-      <limit lower="-1.57" upper="1.57" effort="200" velocity="5"/>
-    </joint>
+  <link name="R_elbow_link">
+    <visual>
+      <geometry><mesh filename="file:///workspace/go2-stair-climber/ros2_ws/install/patient_simulator/share/patient_simulator/meshes/h1/right_elbow_link.STL"/></geometry>
+    </visual>
+    <inertial><mass value="0.5"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
+  </link>
+  <joint name="R_elbow_joint" type="fixed">
+    <parent link="R_shoulder_yaw_link"/>
+    <child link="R_elbow_link"/>
+    <origin xyz="0.0185 0 -0.198" rpy="0 0 0"/>
+  </joint>
 
-    <link name="${side}_thigh_link">
-      <inertial>
-        <origin xyz="0 0 ${-thigh_length/2}"/>
-        <mass value="5.0"/>
-        <xacro:cylinder_inertia m="5.0" r="${thigh_radius}" l="${thigh_length}"/>
-      </inertial>
-      <visual>
-        <geometry>
-          <mesh filename="package://patient_simulator/meshes/${side_full}_hip_pitch_link.dae" scale="${mesh_scale}"/>
-        </geometry>
-      </visual>
-      <collision>
-        <origin xyz="0 0 ${-thigh_length/2}"/>
-        <geometry><cylinder radius="${thigh_radius}" length="${thigh_length}"/></geometry>
-      </collision>
-    </link>
-
-    <joint name="${side}_knee_joint" type="revolute">
-      <parent link="${side}_thigh_link"/>
-      <child link="${side}_shank_link"/>
-      <origin xyz="0 0 ${-thigh_length}"/>
-      <axis xyz="0 1 0"/>
-      <limit lower="0" upper="2.5" effort="200" velocity="5"/>
-    </joint>
-
-    <link name="${side}_shank_link">
-      <inertial>
-        <origin xyz="0 0 ${-shank_length/2}"/>
-        <mass value="3.0"/>
-        <xacro:cylinder_inertia m="3.0" r="${shank_radius}" l="${shank_length}"/>
-      </inertial>
-      <visual>
-        <geometry>
-          <mesh filename="package://patient_simulator/meshes/${side_full}_knee_link.dae" scale="${mesh_scale}"/>
-        </geometry>
-      </visual>
-      <collision>
-        <origin xyz="0 0 ${-shank_length/2}"/>
-        <geometry><cylinder radius="${shank_radius}" length="${shank_length}"/></geometry>
-      </collision>
-    </link>
-
-    <joint name="${side}_ankle_joint" type="revolute">
-      <parent link="${side}_shank_link"/>
-      <child link="${side}_foot_link"/>
-      <origin xyz="0 0 ${-shank_length}"/>
-      <axis xyz="0 1 0"/>
-      <limit lower="-0.7" upper="0.7" effort="100" velocity="5"/>
-    </joint>
-
-    <link name="${side}_foot_link">
-      <inertial>
-        <origin xyz="${foot_length/4} 0 ${-foot_height/2}"/>
-        <mass value="1.0"/>
-        <xacro:box_inertia m="1.0" x="${foot_length}" y="${foot_width}" z="${foot_height}"/>
-      </inertial>
-      <visual>
-        <geometry>
-          <mesh filename="package://patient_simulator/meshes/${side_full}_ankle_link.dae" scale="${mesh_scale}"/>
-        </geometry>
-      </visual>
-      <collision>
-        <origin xyz="${foot_length/4} 0 ${-foot_height/2}"/>
-        <geometry><box size="${foot_length} ${foot_width} ${foot_height}"/></geometry>
-      </collision>
-    </link>
-  </xacro:macro>
-
-  <xacro:leg side="L" reflect="1" side_full="left"/>
-  <xacro:leg side="R" reflect="-1" side_full="right"/>
-
-  <ros2_control name="PatientGazeboSystem" type="system">
+  <ros2_control name="PatientHardware" type="system">
     <hardware>
       <plugin>gazebo_ros2_control/GazeboSystem</plugin>
     </hardware>
@@ -282,15 +345,104 @@
   </ros2_control>
 
   <gazebo>
-    <plugin filename="libgazebo_ros2_control.so" name="patient_gazebo_ros2_control">
+    <plugin name="patient_gazebo_ros2_control" filename="libgazebo_ros2_control.so">
       <ros>
         <namespace>/patient</namespace>
       </ros>
-      <parameters>${ctrl_yaml}</parameters>
+      <parameters>$(find patient_simulator)/config/patient_controllers.yaml</parameters>
       <controller_manager_node_name>controller_manager</controller_manager_node_name>
       <robot_param>robot_description</robot_param>
       <robot_param_node>patient_state_publisher</robot_param_node>
     </plugin>
   </gazebo>
 
+  <gazebo>
+    <plugin name="patient_p3d" filename="libgazebo_ros_p3d.so">
+      <ros>
+        <namespace>/patient</namespace>
+        <remapping>odom:=odom</remapping>
+      </ros>
+      <update_rate>50</update_rate>
+      <body_name>pelvis_link</body_name>
+      <frame_name>world</frame_name>
+      <gaussian_noise>0.0</gaussian_noise>
+    </plugin>
+  </gazebo>
+
+
+
+  <!-- Gazebo material overrides -->
+  <gazebo reference="pelvis_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="torso_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="L_thigh_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="L_shank_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="L_foot_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="R_thigh_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="R_shank_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="R_foot_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="L_shoulder_pitch_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="L_shoulder_roll_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="L_shoulder_yaw_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="L_elbow_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="R_shoulder_pitch_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="R_shoulder_roll_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="R_shoulder_yaw_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+  <gazebo reference="R_elbow_link">
+    <material>Gazebo/Black</material>
+    <gravity>false</gravity>
+  </gazebo>
+
+
+  <gazebo reference="base_x_link">
+    <gravity>false</gravity>
+  </gazebo>
+
+  <gazebo reference="base_z_link">
+    <gravity>false</gravity>
+  </gazebo>
 </robot>

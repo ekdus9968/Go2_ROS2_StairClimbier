@@ -18,7 +18,7 @@ def generate_launch_description():
         value_type=None
     )
     
-    x_pos = LaunchConfiguration('x', default='1.0')
+    x_pos = LaunchConfiguration('x', default='0.0')
     y_pos = LaunchConfiguration('y', default='0.0')
     z_pos = LaunchConfiguration('z', default='0.0')
     
@@ -84,7 +84,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('x', default_value='0.0'),
         DeclareLaunchArgument('y', default_value='0.0'),
-        DeclareLaunchArgument('z', default_value='1.00'),
+        DeclareLaunchArgument('z', default_value='0.0'),
         rsp,
         spawn,
         delayed_jsb,
