@@ -1,0 +1,38 @@
+digraph G {
+"FL_calflower" -> "FL_calflower1"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"FL_calf" -> "FL_calflower"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"FL_thigh" -> "FL_calf"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"FL_calf" -> "FL_foot"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"FR_calflower" -> "FR_calflower1"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"FR_calf" -> "FR_calflower"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"FR_thigh" -> "FR_calf"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"FR_calf" -> "FR_foot"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"Head_upper" -> "Head_lower"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"trunk" -> "Head_upper"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"base" -> "trunk"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"RL_calflower" -> "RL_calflower1"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"RL_calf" -> "RL_calflower"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"RL_thigh" -> "RL_calf"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"RL_calf" -> "RL_foot"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"RR_calflower" -> "RR_calflower1"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"RR_calf" -> "RR_calflower"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"RR_thigh" -> "RR_calf"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"RR_calf" -> "RR_foot"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"base" -> "d435i_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"base" -> "hesai_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"trunk" -> "imu_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"base" -> "oxygen_tank_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"trunk" -> "radar"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"FL_hip" -> "FL_thigh"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"trunk" -> "FL_hip"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"FR_hip" -> "FR_thigh"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"trunk" -> "FR_hip"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"RL_hip" -> "RL_thigh"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"trunk" -> "RL_hip"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"RR_hip" -> "RR_thigh"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+"trunk" -> "RR_hip"[label=" Broadcaster: default_authority\nAverage rate: 20.8\nBuffer length: 1.25\nMost recent transform: 50.053\nOldest transform: 48.803\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1783578905.2938743"[ shape=plaintext ] ;
+}->"base";
+}

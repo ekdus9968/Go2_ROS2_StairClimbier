@@ -80,6 +80,17 @@ def generate_launch_description():
             'gazebo_model_name': 'go2_gazebo',
         }],
     )
+
+    odom_to_tf_node = Node(
+        package='high_level_planner',
+        executable='odom_to_tf_node',
+        name='odom_to_tf',
+        parameters=[{
+            'parent_frame': 'world',
+            'child_frame': 'base',
+        }],
+        output='screen',
+    )
     
     return LaunchDescription([
         DeclareLaunchArgument('x', default_value='0.0'),
@@ -91,4 +102,5 @@ def generate_launch_description():
         spawn_entity_node,
         joint_state_broadcaster_node,
         param_node,
+        odom_to_tf_node,
     ])
