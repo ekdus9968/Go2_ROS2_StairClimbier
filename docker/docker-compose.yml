@@ -5,7 +5,6 @@ services:
       dockerfile: Dockerfile
     image: go2-stair-climber:latest
     container_name: pgtt-train
-    runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
@@ -25,7 +24,6 @@ services:
   ros2-stack:
     image: osrf/ros:humble-desktop-full
     container_name: ros2-stack
-    runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - DISPLAY=${DISPLAY:-:0}

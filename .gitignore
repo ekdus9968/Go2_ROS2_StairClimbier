@@ -70,4 +70,7 @@ install/
 log/
 
 *.png
-*.jpg
+*.jpgros2_ws/stair_detection_test.zip
+ros2_ws/stair_test_bag/
+ros2_ws/stair_detection_test.zip
+ros2_ws/stair_test_bag/

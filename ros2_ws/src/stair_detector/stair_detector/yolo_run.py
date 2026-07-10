@@ -1,24 +1,3 @@
-#!/usr/bin/env python3
-"""
-yolo_stair_detector.py
-
-Custom-trained YOLO11 stair detector, run this on its own to test before
-fusion. Matches the shape of lidar_stair_detector.py / camera_stair_detector.py
-so it can slot into the same fusion pattern later.
-
-Runs your custom-trained .pt model against the RGB camera feed. Publishes a
-distance topic for structural consistency with the other two detectors, but
-the model has no real depth information, so it always publishes -1.0 there
-(same convention the other files already use for "no valid distance").
-
-Run to test:
-  ros2 run stair_detector yolo_stair_detector
-  ros2 topic echo /stair/yolo_detected
-
-Publishes:
-  /stair/yolo_detected    std_msgs/Bool
-  /stair/yolo_distance    std_msgs/Float32  (always -1.0, no real depth info)
-"""
 
 import rclpy
 from rclpy.node import Node
@@ -35,13 +14,11 @@ class YoloStairDetector(Node):
 
         # confirmed from go2_with_payload.urdf.xacro's d435i_sensor gazebo
         # plugin (libgazebo_ros_camera, namespace=/d435i, camera_name=d435i,
-        # no topic overrides -> default gazebo naming applies)
         self.declare_parameter('image_topic', '/d435i/d435i/image_raw')
-        self.declare_parameter('model_path', '/path/to/your_weights.pt')
+        self.declare_parameter('model_path', '/path/to/best.pt') 
         self.declare_parameter('publish_rate_hz', 5.0)
 
-        # *** CHANGE THIS: verify with model.names after loading -
-        # single-class models are almost always 0, but don't assume ***
+        # single class moddel
         self.declare_parameter('yolo_class_id', 0)
         self.declare_parameter('yolo_confidence_threshold', 0.4)
 

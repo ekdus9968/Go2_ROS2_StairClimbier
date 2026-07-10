@@ -11,8 +11,8 @@ class StairConsensus(Node):
     def __init__(self):
         super().__init__('stair_consensus')
 
-        self.declare_parameter('fusion_detected_topic', '/fusion/stair_detected')
-        self.declare_parameter('fusion_distance_topic', '/fusion/stair_distance')
+        self.declare_parameter('fusion_detected_topic', '/stair_detected')
+        self.declare_parameter('fusion_distance_topic', '/stair_distance')
         self.declare_parameter('yolo_detected_topic', '/stair/yolo_detected')
         self.declare_parameter('publish_rate_hz', 5.0)
 

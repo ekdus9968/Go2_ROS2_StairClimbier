@@ -87,4 +87,38 @@ docker compose run --rm pgtt-train
 ## License
 
 TBD
->>>>>>> e12468e (Initial: project structure, docs, gitignore)
+
+## Stair Detection Pipeline (ROS 2)
+
+Five-node sensor fusion pipeline for stair detection, located in `ros2_ws/src/stair_detector/`.
+
+**Architecture:**
+- `lidar_stair_detector.py` — detects step-height jumps in LiDAR point cloud
+- `camera_stair_detector.py` — detects depth edge jumps from RealSense depth image
+- `yolo_run.py` — custom-trained YOLO model (`best.pt`), detects stairs visually
+- `fusion_stair.py` — combines LiDAR + camera into a single stair signal with confidence score
+- `stair_consensus.py` — combines fusion output + YOLO into final `/stair/robot_mode` (STAIR / APPROACH / NONE)
+
+**Status (as of July 2026):**
+- LiDAR, YOLO, fusion, and consensus nodes verified working end-to-end against a real recorded rosbag
+- Camera depth edge detection not yet triggering on real data — depth image conversion bug fixed (RealSense publishes 16UC1/mm, not 32FC1/m), but edge-detection thresholds still need tuning against real sensor values
+- Human detection branch not yet implemented (planned: separate YOLO model + consensus logic for normal/approach/stair mode switching)
+
+**Running the pipeline:**
+```bash
+cd ros2_ws
+colcon build --packages-select stair_detector
+source install/setup.bash
+
+ros2 run stair_detector lidar_stair_detector &
+ros2 run stair_detector camera_stair_detector &
+ros2 run stair_detector yolo_stair_detector --ros-args -p model_path:=/path/to/best.pt &
+ros2 run stair_detector fusion_stair &
+ros2 run stair_detector stair_consensus &
+```
+
+**Testing with a recorded bag (no simulation required):**
+```bash
+ros2 bag play /path/to/bag
+ros2 topic echo /stair/robot_mode
+```

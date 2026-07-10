@@ -20,8 +20,11 @@ setup(
     license='Apache-2.0',
     entry_points={
         'console_scripts': [
-            'stair_detector_node = stair_detector.stair_detector_node:main',
-            'stair_geometry_verifier_node = stair_detector.stair_geometry_verifier_node:main',
+            'lidar_stair_detector = stair_detector.lidar_stair_detector:main',
+            'camera_stair_detector = stair_detector.camera_stair_detector:main',
+            'yolo_stair_detector = stair_detector.yolo_run:main',
+            'fusion_stair = stair_detector.fusion_stair:main',
+            'stair_consensus = stair_detector.stair_consensus:main',
         ],
     },
 )
