@@ -1,0 +1,36 @@
+particle_filter_node:
+  ros__parameters:
+    # Number of particles
+    num_particles: 300
+    update_rate: 10.0  # Hz
+    
+    # Search space (world/hesai_link frame) for initialization
+    # Cover expected person locations
+    search_x_min: -5.0
+    search_x_max: 10.0
+    search_y_min: -3.0
+    search_y_max: 3.0
+    search_z_min: 0.0
+    search_z_max: 2.0
+    
+    # Motion noise (per step)
+    # X, Y horizontal
+    pos_noise_xy: 0.05
+    # Z vertical (smaller since stairs move slower vertically)
+    pos_noise_z: 0.02
+    # Velocity noise
+    vel_noise_xy: 0.10
+    vel_noise_z: 0.05
+    
+    # Observation model
+    # obs_sigma: expected measurement noise (m)
+    obs_sigma: 0.10
+    # min_weight: robust min likelihood
+    min_weight: 0.01
+    
+    # Resampling
+    # ESS < ratio * n → resample
+    ess_ratio_threshold: 0.5
+    
+    # Frame
+    frame_id: hesai_link

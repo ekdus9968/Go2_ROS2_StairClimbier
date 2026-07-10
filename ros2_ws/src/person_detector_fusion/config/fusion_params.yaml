@@ -1,6 +1,8 @@
 person_fusion_node:
   ros__parameters:
     # Matching threshold between LiDAR and Camera positions (meters)
+    # Sim: 0.3 m
+    # Real: 0.5 m
     match_threshold: 0.3
     
     # Camera data timeout (seconds)

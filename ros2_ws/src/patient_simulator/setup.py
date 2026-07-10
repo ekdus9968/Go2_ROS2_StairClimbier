@@ -33,6 +33,7 @@ setup(
         'console_scripts': [
             'teleop_patient = patient_simulator.teleop_patient:main',
             'gait_generator = patient_simulator.gait_generator:main',
+            'patient_mover_node = patient_simulator.patient_mover_node:main',
         ],
     },
 )
