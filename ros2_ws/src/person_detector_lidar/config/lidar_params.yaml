@@ -1,0 +1,28 @@
+lidar_clustering_node:
+  ros__parameters:
+    # Input filtering
+    angle_min_deg: -35.0
+    angle_max_deg: 35.0
+    distance_min: 0.5
+    distance_max: 4.0
+    
+    # Ground removal
+    ground_ransac_threshold: 0.05
+    ground_ransac_iterations: 100
+    
+    # DBSCAN
+    dbscan_epsilon: 0.20
+    dbscan_min_points_ref: 500.0
+    
+    # Human shape - relaxed for partial visibility
+    human_height_min: 0.5
+    human_height_max: 2.0
+    human_width_min: 0.15
+    human_width_max: 0.7
+    human_depth_min: 0.15
+    human_depth_max: 0.6
+    aspect_ratio_min: 1.5
+    
+    # Frames
+    lidar_frame: hesai_link
+    world_frame: world

@@ -43,7 +43,7 @@ class LidarClusteringNode(Node):
         self.declare_parameter('angle_min_deg', -35.0)
         self.declare_parameter('angle_max_deg', 35.0)
         self.declare_parameter('distance_min', 0.5)
-        self.declare_parameter('distance_max', 3.0)
+        self.declare_parameter('distance_max', 4.0)
 
         # Ground removal (RANSAC)
         self.declare_parameter('ground_ransac_threshold', 0.05)  # 5 cm
@@ -55,7 +55,7 @@ class LidarClusteringNode(Node):
         # min_points = ref / (distance^2)
 
         # Human shape filter
-        self.declare_parameter('human_height_min', 1.4)
+        self.declare_parameter('human_height_min', 1.2)
         self.declare_parameter('human_height_max', 1.9)
         self.declare_parameter('human_width_min', 0.25)
         self.declare_parameter('human_width_max', 0.7)
@@ -106,7 +106,7 @@ class LidarClusteringNode(Node):
         # ==========================
         # Best-effort QoS for LiDAR (high rate, tolerable to drop)
         qos = QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=1,
         )
@@ -138,17 +138,20 @@ class LidarClusteringNode(Node):
         # PointCloud2 -> numpy array (N, 3)
         points = self.pointcloud2_to_numpy(msg)
         if points is None or len(points) == 0:
+            self.get_logger().info(f'[STAGE0] No points from PointCloud2')
             return
+        
+        self.get_logger().info(f'[STAGE0] Raw points: {len(points)}')
 
         # Step 1: Angle + distance filter (in LiDAR frame)
         points = self.filter_by_angle_distance(points)
+        self.get_logger().info(f'[STAGE1] After angle/dist filter: {len(points)}')
         if len(points) < 10:
-            self.get_logger().debug(
-                f'After angle/distance filter: {len(points)} points')
             return
 
         # Step 2: Ground/stair plane removal
         points = self.remove_ground_plane(points)
+        self.get_logger().info(f'[STAGE2] After ground removal: {len(points)}')
         if len(points) < 10:
             return
 
@@ -156,12 +159,14 @@ class LidarClusteringNode(Node):
         cluster_labels = self.dbscan_cluster(points)
         num_clusters = len(set(cluster_labels)) - (
             1 if -1 in cluster_labels else 0)
+        self.get_logger().info(f'[STAGE3] Clusters: {num_clusters}')
 
         if num_clusters == 0:
             return
 
         # Step 4: Extract cluster info + human-shape filter
         person_candidates = self.filter_human_shape(points, cluster_labels)
+        self.get_logger().info(f'[STAGE4] Person candidates: {len(person_candidates)}')
 
         # Publish
         self.publish_candidates(person_candidates, msg.header.stamp)
@@ -173,15 +178,16 @@ class LidarClusteringNode(Node):
     def pointcloud2_to_numpy(self, msg: PointCloud2) -> np.ndarray:
         """Convert PointCloud2 to (N, 3) numpy array of XYZ."""
         try:
-            # read_points returns a structured array
-            gen = point_cloud2.read_points(
+            # read_points returns structured numpy array
+            arr = point_cloud2.read_points(
                 msg, field_names=('x', 'y', 'z'), skip_nans=True)
-            arr = np.array(list(gen), dtype=np.float32)
-            if arr.ndim == 1:
-                # Handle structured array case
-                arr = np.stack(
-                    [arr['x'], arr['y'], arr['z']], axis=-1)
-            return arr
+            # Access fields directly (structured array)
+            x = arr['x']
+            y = arr['y']
+            z = arr['z']
+            # Stack into (N, 3)
+            points = np.stack([x, y, z], axis=-1).astype(np.float32)
+            return points
         except Exception as e:
             self.get_logger().error(f'PointCloud2 conversion failed: {e}')
             return None
@@ -190,42 +196,24 @@ class LidarClusteringNode(Node):
     # Filtering
     # ==========================
     def filter_by_angle_distance(self, points: np.ndarray) -> np.ndarray:
-        """Filter points by front angle and distance range."""
+        """Temp: no angle filter, only distance."""
         x = points[:, 0]
         y = points[:, 1]
-
-        # Angle from x-axis (forward)
-        angles = np.arctan2(y, x)
-        # Distance in horizontal plane
         distances = np.sqrt(x**2 + y**2)
-
-        mask = (
-            (angles >= self.angle_min) &
-            (angles <= self.angle_max) &
-            (distances >= self.dist_min) &
-            (distances <= self.dist_max)
-        )
+        mask = (distances >= self.dist_min) & (distances <= self.dist_max)
         return points[mask]
 
     def remove_ground_plane(self, points: np.ndarray) -> np.ndarray:
-        """Remove ground/stair planes using RANSAC.
-        
-        Simple approach: iteratively fit planes and remove points on them.
-        For our case, we mainly want to remove the ground plane.
+        """Remove points near ground plane (LiDAR frame).
+        LiDAR is at hesai_link (z=0.44 above ground in URDF).
+        Ground appears at z ~ -0.44 in LiDAR frame.
+        Filter out points at z < -0.30 (30cm below LiDAR).
         """
-        if len(points) < 50:
+        if len(points) < 10:
             return points
-
-        remaining = points.copy()
-        # One-pass RANSAC for ground plane
-        best_inliers_mask = self.ransac_plane(
-            remaining, self.ground_threshold, self.ground_iterations)
-
-        if best_inliers_mask is None:
-            return remaining
-
-        # Return non-ground points
-        return remaining[~best_inliers_mask]
+        # Keep points above the ground
+        mask = points[:, 2] > -0.40
+        return points[mask]
 
     def ransac_plane(self, points: np.ndarray, threshold: float,
                      iterations: int) -> np.ndarray:
@@ -290,65 +278,71 @@ class LidarClusteringNode(Node):
     # ==========================
     # Human shape filter
     # ==========================
-    def filter_human_shape(self, points: np.ndarray,
-                            labels: np.ndarray) -> list:
-        """Filter clusters by human shape. Returns list of (center, info)."""
+    def filter_human_shape(self, points, labels):
         candidates = []
-
         unique_labels = set(labels)
-        unique_labels.discard(-1)  # remove noise
+        unique_labels.discard(-1)
 
         for label in unique_labels:
             cluster_pts = points[labels == label]
-
             if len(cluster_pts) < 10:
+                self.get_logger().info(
+                    f'  Cluster {label}: SKIP (only {len(cluster_pts)} pts)')
                 continue
 
-            # Bounding box
             min_xyz = cluster_pts.min(axis=0)
             max_xyz = cluster_pts.max(axis=0)
-            size = max_xyz - min_xyz  # [dx, dy, dz]
+            size = max_xyz - min_xyz
+            width, depth, height = size[0], size[1], size[2]
+            center = cluster_pts.mean(axis=0)
+            distance = np.linalg.norm(center[:2])
 
-            width = size[0]
-            depth = size[1]
-            height = size[2]
+            self.get_logger().info(
+                f'  Cluster {label}: {len(cluster_pts)} pts, '
+                f'size=({width:.2f},{depth:.2f},{height:.2f}), '
+                f'center=({center[0]:.2f},{center[1]:.2f},{center[2]:.2f}), '
+                f'dist={distance:.2f}')
 
-            # Filter by size
             if not (self.h_min <= height <= self.h_max):
+                self.get_logger().info(
+                    f'    REJECTED: height {height:.2f} not in [{self.h_min}, {self.h_max}]')
                 continue
-            # Width can be width or depth (person can be facing any direction)
+
             wh_dim = min(width, depth)
             if not (self.w_min <= wh_dim <= self.w_max):
-                continue
-            other_dim = max(width, depth)
-            if not (self.d_min <= other_dim <= self.d_max):
+                self.get_logger().info(
+                    f'    REJECTED: width {wh_dim:.2f} not in [{self.w_min}, {self.w_max}]')
                 continue
 
-            # Aspect ratio (height / horizontal min)
+            other_dim = max(width, depth)
+            if not (self.d_min <= other_dim <= self.d_max):
+                self.get_logger().info(
+                    f'    REJECTED: depth {other_dim:.2f} not in [{self.d_min}, {self.d_max}]')
+                continue
+
             if wh_dim > 0:
                 aspect = height / wh_dim
                 if aspect < self.aspect_min:
+                    self.get_logger().info(
+                        f'    REJECTED: aspect {aspect:.2f} < {self.aspect_min}')
                     continue
 
-            # Distance-adaptive min_points check
-            center = cluster_pts.mean(axis=0)
-            distance = np.linalg.norm(center[:2])  # horizontal distance
             min_points = max(30, int(self.min_points_ref / (distance**2)))
-
             if len(cluster_pts) < min_points:
-                self.get_logger().debug(
-                    f'Cluster {label}: {len(cluster_pts)} pts < {min_points} '
-                    f'required at {distance:.2f}m')
+                self.get_logger().info(
+                    f'    REJECTED: pts {len(cluster_pts)} < {min_points} required')
                 continue
 
-            # Point density check
             volume = width * depth * height
             if volume > 0:
                 density = len(cluster_pts) / volume
                 min_density = self.min_points_ref / (distance**2)
-                if density < min_density * 0.5:  # relaxed threshold
+                if density < min_density * 0.5:
+                    self.get_logger().info(
+                        f'    REJECTED: density {density:.1f} < {min_density*0.5:.1f}')
                     continue
 
+            self.get_logger().info(f'    ACCEPTED as person!')
             candidates.append({
                 'label': label,
                 'center': center,
