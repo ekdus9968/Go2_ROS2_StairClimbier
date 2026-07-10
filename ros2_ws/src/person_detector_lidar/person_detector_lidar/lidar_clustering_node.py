@@ -55,7 +55,7 @@ class LidarClusteringNode(Node):
         # min_points = ref / (distance^2)
 
         # Human shape filter
-        self.declare_parameter('human_height_min', 1.2)
+        self.declare_parameter('human_height_min', 0.5)
         self.declare_parameter('human_height_max', 1.9)
         self.declare_parameter('human_width_min', 0.25)
         self.declare_parameter('human_width_max', 0.7)
@@ -212,7 +212,7 @@ class LidarClusteringNode(Node):
         if len(points) < 10:
             return points
         # Keep points above the ground
-        mask = points[:, 2] > -0.40
+        mask = points[:, 2] > -0.42
         return points[mask]
 
     def ransac_plane(self, points: np.ndarray, threshold: float,

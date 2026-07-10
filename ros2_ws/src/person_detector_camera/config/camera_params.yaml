@@ -1,0 +1,16 @@
+camera_keypoint_node:
+  ros__parameters:
+    # YOLO model
+    yolo_model: yolo11n-pose.pt
+    conf_threshold: 0.5
+    crop_size: 640
+    
+    # Frames
+    camera_frame: d435i_link
+    lidar_frame: hesai_link
+    
+    # Verification thresholds
+    # Group A (lower body: knees, ankles): 3+ detected
+    # Group B (torso: hips): 2+ detected
+    group_a_required: 3
+    group_b_required: 2
