@@ -3,8 +3,8 @@ lidar_clustering_node:
     # Input filtering
     angle_min_deg: -35.0
     angle_max_deg: 35.0
-    distance_min: 0.5
-    distance_max: 4.0
+    distance_min: 0.6
+    distance_max: 6.0
     
     # Ground removal
     ground_ransac_threshold: 0.05
@@ -20,7 +20,7 @@ lidar_clustering_node:
     human_width_min: 0.15
     human_width_max: 0.7
     human_depth_min: 0.15
-    human_depth_max: 0.6
+    human_depth_max: 0.7
     aspect_ratio_min: 1.5
     
     # Frames

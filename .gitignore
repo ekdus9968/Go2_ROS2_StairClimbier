@@ -73,3 +73,5 @@ log/
 *.jpg
 *.gv
 *.pdf
+
+rosbags/

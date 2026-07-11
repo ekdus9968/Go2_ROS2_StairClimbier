@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
 """
-LiDAR Clustering Node for Person Detection.
+LiDAR Person Clustering Node with sub-region search.
 
 Pipeline:
-1. Receive PointCloud2 from Hesai LiDAR
-2. Filter by angle (-35 to +35 degrees, front)
-3. Filter by distance (0.5m to 3m)
-4. Ground/stair plane removal (RANSAC)
-5. DBSCAN clustering
-6. Human-shape filter (bounding box + aspect ratio + point density)
-7. Publish person candidates
-
-Input:  /hesai/hesai_lidar_controller/out (sensor_msgs/PointCloud2)
-Output: /person_candidates (geometry_msgs/PoseArray) - human-shape candidates
-Debug:  /lidar_clusters (sensor_msgs/PointCloud2) - all clusters colored
+1. Angle + distance filter
+2. Ground removal
+3. DBSCAN clustering
+4. For each cluster in valid distance range:
+   a. Check if cluster is a person by shape
+   b. If cluster too large, search for person sub-regions
+      using XY density grid + person-sized box
+5. Publish person candidates
 """
 
 import numpy as np
+from collections import Counter
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
@@ -25,64 +23,54 @@ from sensor_msgs.msg import PointCloud2, PointField
 from sensor_msgs_py import point_cloud2
 from geometry_msgs.msg import PoseArray, Pose
 from std_msgs.msg import Header
-
 from sklearn.cluster import DBSCAN
-
-import tf2_ros
-from tf2_ros import TransformException
 
 
 class LidarClusteringNode(Node):
     def __init__(self):
         super().__init__('lidar_clustering_node')
 
-        # ==========================
-        # Parameters
-        # ==========================
-        # Input filtering
+        # Filters
         self.declare_parameter('angle_min_deg', -35.0)
         self.declare_parameter('angle_max_deg', 35.0)
-        self.declare_parameter('distance_min', 0.5)
-        self.declare_parameter('distance_max', 4.0)
+        self.declare_parameter('distance_min', 0.6)
+        self.declare_parameter('distance_max', 6.0)
 
-        # Ground removal (RANSAC)
-        self.declare_parameter('ground_ransac_threshold', 0.05)  # 5 cm
-        self.declare_parameter('ground_ransac_iterations', 100)
+        # Ground
+        self.declare_parameter('ground_z_threshold', -0.30)
 
         # DBSCAN
-        self.declare_parameter('dbscan_epsilon', 0.20)  # 20 cm
+        self.declare_parameter('dbscan_epsilon', 0.20)
         self.declare_parameter('dbscan_min_points_ref', 500.0)
-        # min_points = ref / (distance^2)
 
-        # Human shape filter
+        # Human shape
         self.declare_parameter('human_height_min', 0.5)
-        self.declare_parameter('human_height_max', 1.9)
-        self.declare_parameter('human_width_min', 0.25)
+        self.declare_parameter('human_height_max', 2.0)
+        self.declare_parameter('human_width_min', 0.15)
         self.declare_parameter('human_width_max', 0.7)
-        self.declare_parameter('human_depth_min', 0.2)
-        self.declare_parameter('human_depth_max', 0.6)
-        self.declare_parameter('aspect_ratio_min', 2.0)  # height/width
+        self.declare_parameter('human_depth_min', 0.15)
+        self.declare_parameter('human_depth_max', 0.7)
+
+        # Sub-region search
+        self.declare_parameter('subregion_grid_size', 0.2)
+        self.declare_parameter('subregion_min_points', 30)
+        self.declare_parameter('subregion_top_k', 5)
+        self.declare_parameter('subregion_box_size', 0.5)
+        self.declare_parameter('cluster_large_threshold', 1.5)
 
         # Frames
         self.declare_parameter('lidar_frame', 'hesai_link')
         self.declare_parameter('world_frame', 'world')
 
-        # Load parameters
-        self.angle_min = np.deg2rad(
-            self.get_parameter('angle_min_deg').value)
-        self.angle_max = np.deg2rad(
-            self.get_parameter('angle_max_deg').value)
+        # Load
+        self.angle_min = np.deg2rad(self.get_parameter('angle_min_deg').value)
+        self.angle_max = np.deg2rad(self.get_parameter('angle_max_deg').value)
         self.dist_min = self.get_parameter('distance_min').value
         self.dist_max = self.get_parameter('distance_max').value
 
-        self.ground_threshold = self.get_parameter(
-            'ground_ransac_threshold').value
-        self.ground_iterations = self.get_parameter(
-            'ground_ransac_iterations').value
+        self.ground_z = self.get_parameter('ground_z_threshold').value
 
         self.dbscan_eps = self.get_parameter('dbscan_epsilon').value
-        self.min_points_ref = self.get_parameter(
-            'dbscan_min_points_ref').value
 
         self.h_min = self.get_parameter('human_height_min').value
         self.h_max = self.get_parameter('human_height_max').value
@@ -90,329 +78,218 @@ class LidarClusteringNode(Node):
         self.w_max = self.get_parameter('human_width_max').value
         self.d_min = self.get_parameter('human_depth_min').value
         self.d_max = self.get_parameter('human_depth_max').value
-        self.aspect_min = self.get_parameter('aspect_ratio_min').value
+
+        self.sub_grid = self.get_parameter('subregion_grid_size').value
+        self.sub_min_pts = self.get_parameter('subregion_min_points').value
+        self.sub_top_k = self.get_parameter('subregion_top_k').value
+        self.sub_box = self.get_parameter('subregion_box_size').value
+        self.large_thresh = self.get_parameter('cluster_large_threshold').value
 
         self.lidar_frame = self.get_parameter('lidar_frame').value
-        self.world_frame = self.get_parameter('world_frame').value
 
-        # ==========================
-        # TF listener
-        # ==========================
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
-
-        # ==========================
-        # Publishers / Subscribers
-        # ==========================
-        # Best-effort QoS for LiDAR (high rate, tolerable to drop)
         qos = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=1,
         )
 
-        self.sub = self.create_subscription(
-            PointCloud2,
-            '/hesai/hesai_lidar_controller/out',
-            self.cloud_callback,
-            qos,
-        )
+        self.create_subscription(
+            PointCloud2, '/hesai/hesai_lidar_controller/out',
+            self.cloud_cb, qos)
 
         self.pub_candidates = self.create_publisher(
             PoseArray, '/person_candidates', 10)
-        self.pub_debug_clusters = self.create_publisher(
+        self.pub_clusters = self.create_publisher(
             PointCloud2, '/lidar_clusters', 10)
 
-        self.get_logger().info('LiDAR Clustering Node started')
         self.get_logger().info(
-            f'Angle range: [{np.rad2deg(self.angle_min):.1f}, '
-            f'{np.rad2deg(self.angle_max):.1f}] deg')
-        self.get_logger().info(
-            f'Distance range: [{self.dist_min:.1f}, '
-            f'{self.dist_max:.1f}] m')
+            'Lidar Clustering Node (sub-region search) started')
 
-    # ==========================
-    # Main callback
-    # ==========================
-    def cloud_callback(self, msg: PointCloud2):
-        # PointCloud2 -> numpy array (N, 3)
-        points = self.pointcloud2_to_numpy(msg)
-        if points is None or len(points) == 0:
-            self.get_logger().info(f'[STAGE0] No points from PointCloud2')
-            return
-        
+    def cloud_cb(self, msg: PointCloud2):
+        arr = point_cloud2.read_points(
+            msg, field_names=('x', 'y', 'z'), skip_nans=True)
+        points = np.column_stack((
+            np.array(arr['x']),
+            np.array(arr['y']),
+            np.array(arr['z']),
+        )).astype(np.float32)
+
         self.get_logger().info(f'[STAGE0] Raw points: {len(points)}')
-
-        # Step 1: Angle + distance filter (in LiDAR frame)
-        points = self.filter_by_angle_distance(points)
-        self.get_logger().info(f'[STAGE1] After angle/dist filter: {len(points)}')
-        if len(points) < 10:
+        if len(points) < 100:
             return
 
-        # Step 2: Ground/stair plane removal
+        # STAGE 1
+        angle = np.arctan2(points[:, 1], points[:, 0])
+        dist = np.linalg.norm(points[:, :2], axis=1)
+        mask = ((angle >= self.angle_min) & (angle <= self.angle_max) &
+                (dist >= self.dist_min) & (dist <= self.dist_max))
+        points = points[mask]
+        self.get_logger().info(
+            f'[STAGE1] After angle/dist filter: {len(points)}')
+
+        # STAGE 2
         points = self.remove_ground_plane(points)
-        self.get_logger().info(f'[STAGE2] After ground removal: {len(points)}')
-        if len(points) < 10:
+        self.get_logger().info(
+            f'[STAGE2] After ground removal: {len(points)}')
+        if len(points) < 30:
             return
 
-        # Step 3: DBSCAN clustering
-        cluster_labels = self.dbscan_cluster(points)
-        num_clusters = len(set(cluster_labels)) - (
-            1 if -1 in cluster_labels else 0)
-        self.get_logger().info(f'[STAGE3] Clusters: {num_clusters}')
+        # STAGE 3
+        clustering = DBSCAN(eps=self.dbscan_eps, min_samples=10).fit(points)
+        labels = clustering.labels_
+        unique_labels = set(labels) - {-1}
+        self.get_logger().info(f'[STAGE3] Clusters: {len(unique_labels)}')
 
-        if num_clusters == 0:
-            return
-
-        # Step 4: Extract cluster info + human-shape filter
-        person_candidates = self.filter_human_shape(points, cluster_labels)
-        self.get_logger().info(f'[STAGE4] Person candidates: {len(person_candidates)}')
-
-        # Publish
-        self.publish_candidates(person_candidates, msg.header.stamp)
-        self.publish_debug_clusters(points, cluster_labels, msg.header.stamp)
-
-    # ==========================
-    # PointCloud2 conversion
-    # ==========================
-    def pointcloud2_to_numpy(self, msg: PointCloud2) -> np.ndarray:
-        """Convert PointCloud2 to (N, 3) numpy array of XYZ."""
-        try:
-            # read_points returns structured numpy array
-            arr = point_cloud2.read_points(
-                msg, field_names=('x', 'y', 'z'), skip_nans=True)
-            # Access fields directly (structured array)
-            x = arr['x']
-            y = arr['y']
-            z = arr['z']
-            # Stack into (N, 3)
-            points = np.stack([x, y, z], axis=-1).astype(np.float32)
-            return points
-        except Exception as e:
-            self.get_logger().error(f'PointCloud2 conversion failed: {e}')
-            return None
-
-    # ==========================
-    # Filtering
-    # ==========================
-    def filter_by_angle_distance(self, points: np.ndarray) -> np.ndarray:
-        """Temp: no angle filter, only distance."""
-        x = points[:, 0]
-        y = points[:, 1]
-        distances = np.sqrt(x**2 + y**2)
-        mask = (distances >= self.dist_min) & (distances <= self.dist_max)
-        return points[mask]
-
-    def remove_ground_plane(self, points: np.ndarray) -> np.ndarray:
-        """Remove points near ground plane (LiDAR frame).
-        LiDAR is at hesai_link (z=0.44 above ground in URDF).
-        Ground appears at z ~ -0.44 in LiDAR frame.
-        Filter out points at z < -0.30 (30cm below LiDAR).
-        """
-        if len(points) < 10:
-            return points
-        # Keep points above the ground
-        mask = points[:, 2] > -0.42
-        return points[mask]
-
-    def ransac_plane(self, points: np.ndarray, threshold: float,
-                     iterations: int) -> np.ndarray:
-        """Simple RANSAC plane fitting. Returns inliers mask or None."""
-        if len(points) < 3:
-            return None
-
-        best_count = 0
-        best_mask = None
-
-        n = len(points)
-        rng = np.random.default_rng()
-
-        for _ in range(iterations):
-            # Random 3 points
-            idx = rng.choice(n, size=3, replace=False)
-            p1, p2, p3 = points[idx]
-
-            # Plane normal from cross product
-            v1 = p2 - p1
-            v2 = p3 - p1
-            normal = np.cross(v1, v2)
-            norm = np.linalg.norm(normal)
-            if norm < 1e-6:
-                continue
-            normal /= norm
-
-            # Prefer horizontal planes (ground/stairs)
-            # Normal z-component should be near 1 (horizontal plane)
-            if abs(normal[2]) < 0.7:
-                continue
-
-            # Plane equation: n . (p - p1) = 0
-            d = -np.dot(normal, p1)
-            distances = np.abs(points @ normal + d)
-
-            inlier_mask = distances < threshold
-            count = int(inlier_mask.sum())
-
-            if count > best_count:
-                best_count = count
-                best_mask = inlier_mask
-
-        # Require a minimum inlier count to accept
-        if best_count < 50:
-            return None
-        return best_mask
-
-    # ==========================
-    # Clustering
-    # ==========================
-    def dbscan_cluster(self, points: np.ndarray) -> np.ndarray:
-        """DBSCAN clustering. Returns cluster labels (-1 = noise)."""
-        if len(points) < 5:
-            return np.full(len(points), -1)
-
-        # min_samples set as small default; per-cluster refinement in filter step
-        db = DBSCAN(eps=self.dbscan_eps, min_samples=10)
-        labels = db.fit_predict(points)
-        return labels
-
-    # ==========================
-    # Human shape filter
-    # ==========================
-    def filter_human_shape(self, points, labels):
+        # STAGE 4
         candidates = []
-        unique_labels = set(labels)
-        unique_labels.discard(-1)
+        cluster_pts_for_pub = []
+        cluster_lbls_for_pub = []
 
         for label in unique_labels:
-            cluster_pts = points[labels == label]
-            if len(cluster_pts) < 10:
-                self.get_logger().info(
-                    f'  Cluster {label}: SKIP (only {len(cluster_pts)} pts)')
-                continue
-
-            min_xyz = cluster_pts.min(axis=0)
-            max_xyz = cluster_pts.max(axis=0)
-            size = max_xyz - min_xyz
-            width, depth, height = size[0], size[1], size[2]
-            center = cluster_pts.mean(axis=0)
-            distance = np.linalg.norm(center[:2])
+            cluster = points[labels == label]
+            center = cluster.mean(axis=0)
+            size = cluster.max(axis=0) - cluster.min(axis=0)
+            cluster_dist = np.linalg.norm(center[:2])
 
             self.get_logger().info(
-                f'  Cluster {label}: {len(cluster_pts)} pts, '
-                f'size=({width:.2f},{depth:.2f},{height:.2f}), '
-                f'center=({center[0]:.2f},{center[1]:.2f},{center[2]:.2f}), '
-                f'dist={distance:.2f}')
+                f'  Cluster {label}: {len(cluster)} pts, '
+                f'size=({size[0]:.2f},{size[1]:.2f},{size[2]:.2f}), '
+                f'center=({center[0]:.2f},{center[1]:.2f},'
+                f'{center[2]:.2f}), dist={cluster_dist:.2f}')
 
-            if not (self.h_min <= height <= self.h_max):
-                self.get_logger().info(
-                    f'    REJECTED: height {height:.2f} not in [{self.h_min}, {self.h_max}]')
+            if not (self.dist_min <= cluster_dist <= self.dist_max):
                 continue
 
-            wh_dim = min(width, depth)
-            if not (self.w_min <= wh_dim <= self.w_max):
-                self.get_logger().info(
-                    f'    REJECTED: width {wh_dim:.2f} not in [{self.w_min}, {self.w_max}]')
+            # Direct shape check
+            if self.is_person_shape(size):
+                self.get_logger().info('    ACCEPTED (direct)')
+                candidates.append(center)
+                cluster_pts_for_pub.append(cluster)
+                cluster_lbls_for_pub.extend([label] * len(cluster))
                 continue
 
-            other_dim = max(width, depth)
-            if not (self.d_min <= other_dim <= self.d_max):
-                self.get_logger().info(
-                    f'    REJECTED: depth {other_dim:.2f} not in [{self.d_min}, {self.d_max}]')
-                continue
-
-            if wh_dim > 0:
-                aspect = height / wh_dim
-                if aspect < self.aspect_min:
+            # Sub-region search for large clusters
+            is_large = (size[0] > self.w_max * self.large_thresh or
+                         size[1] > self.d_max * self.large_thresh)
+            if is_large:
+                self.get_logger().info('    Large, searching sub-regions')
+                sub_centers = self.find_person_subregions(cluster)
+                for sc in sub_centers:
                     self.get_logger().info(
-                        f'    REJECTED: aspect {aspect:.2f} < {self.aspect_min}')
-                    continue
+                        f'    ACCEPTED (sub-region) at '
+                        f'({sc[0]:.2f},{sc[1]:.2f},{sc[2]:.2f})')
+                    candidates.append(sc)
+                    cluster_pts_for_pub.append(cluster)
+                    cluster_lbls_for_pub.extend([label] * len(cluster))
+            else:
+                self.get_logger().info('    REJECTED: shape')
 
-            min_points = max(30, int(self.min_points_ref / (distance**2)))
-            if len(cluster_pts) < min_points:
-                self.get_logger().info(
-                    f'    REJECTED: pts {len(cluster_pts)} < {min_points} required')
-                continue
+        self.get_logger().info(
+            f'[STAGE4] Person candidates: {len(candidates)}')
 
-            volume = width * depth * height
-            if volume > 0:
-                density = len(cluster_pts) / volume
-                min_density = self.min_points_ref / (distance**2)
-                if density < min_density * 0.5:
-                    self.get_logger().info(
-                        f'    REJECTED: density {density:.1f} < {min_density*0.5:.1f}')
-                    continue
-
-            self.get_logger().info(f'    ACCEPTED as person!')
-            candidates.append({
-                'label': label,
-                'center': center,
-                'size': size,
-                'num_points': len(cluster_pts),
-                'distance': distance,
-            })
-
-        return candidates
-
-    # ==========================
-    # Publishing
-    # ==========================
-    def publish_candidates(self, candidates: list, stamp):
-        """Publish person candidates as PoseArray."""
-        msg = PoseArray()
-        msg.header.stamp = stamp
-        msg.header.frame_id = self.lidar_frame
-
-        for c in candidates:
-            pose = Pose()
-            pose.position.x = float(c['center'][0])
-            pose.position.y = float(c['center'][1])
-            pose.position.z = float(c['center'][2])
-            pose.orientation.w = 1.0
-            msg.poses.append(pose)
-
-        self.pub_candidates.publish(msg)
-
+        # Publish
         if len(candidates) > 0:
-            self.get_logger().info(
-                f'Published {len(candidates)} person candidate(s)')
+            pose_array = PoseArray()
+            pose_array.header.stamp = msg.header.stamp
+            pose_array.header.frame_id = self.lidar_frame
             for c in candidates:
-                self.get_logger().debug(
-                    f'  Label {c["label"]}: pos=({c["center"][0]:.2f}, '
-                    f'{c["center"][1]:.2f}, {c["center"][2]:.2f}) '
-                    f'dist={c["distance"]:.2f}m pts={c["num_points"]}')
+                pose = Pose()
+                pose.position.x = float(c[0])
+                pose.position.y = float(c[1])
+                pose.position.z = float(c[2])
+                pose.orientation.w = 1.0
+                pose_array.poses.append(pose)
+            self.pub_candidates.publish(pose_array)
+            self.get_logger().info(
+                f'Published {len(candidates)} candidate(s)')
 
-    def publish_debug_clusters(self, points: np.ndarray,
-                                labels: np.ndarray, stamp):
-        """Publish clustered points with cluster label as intensity."""
-        header = Header()
-        header.stamp = stamp
-        header.frame_id = self.lidar_frame
+        # Publish clusters
+        if len(cluster_pts_for_pub) > 0:
+            all_pts = np.vstack(cluster_pts_for_pub)
+            all_lbl = np.array(cluster_lbls_for_pub, dtype=np.float32)
+            pts_with_label = np.column_stack((all_pts, all_lbl))
+            self.publish_cluster_cloud(msg.header, pts_with_label)
 
-        # Combine points with labels as intensity
-        pts_with_label = np.column_stack(
-            (points, labels.astype(np.float32)))
+    def remove_ground_plane(self, points: np.ndarray) -> np.ndarray:
+        if len(points) < 10:
+            return points
+        mask = points[:, 2] > self.ground_z
+        return points[mask]
 
-        # Only publish clustered (non-noise) points
-        mask = labels >= 0
-        if not mask.any():
-            return
+    def is_person_shape(self, size: np.ndarray) -> bool:
+        w, d, h = size
+        if not (self.h_min <= h <= self.h_max):
+            return False
+        if not (self.w_min <= w <= self.w_max):
+            return False
+        if not (self.d_min <= d <= self.d_max):
+            return False
+        return True
 
-        pts_pub = pts_with_label[mask]
+    def find_person_subregions(self, cluster_points: np.ndarray) -> list:
+        """Find person-sized sub-regions in a large cluster."""
+        x = cluster_points[:, 0]
+        y = cluster_points[:, 1]
 
+        gx = np.floor(x / self.sub_grid).astype(int)
+        gy = np.floor(y / self.sub_grid).astype(int)
+
+        cells = Counter(zip(gx.tolist(), gy.tolist()))
+
+        person_centers = []
+        seen_positions = []
+
+        for (grid_x, grid_y), count in cells.most_common(self.sub_top_k):
+            if count < self.sub_min_pts:
+                continue
+
+            center_x = grid_x * self.sub_grid + self.sub_grid / 2
+            center_y = grid_y * self.sub_grid + self.sub_grid / 2
+
+            # Skip near duplicates
+            too_close = False
+            for sx, sy in seen_positions:
+                if abs(sx - center_x) < 0.3 and abs(sy - center_y) < 0.3:
+                    too_close = True
+                    break
+            if too_close:
+                continue
+
+            box_mask = (
+                (np.abs(cluster_points[:, 0] - center_x) < self.sub_box) &
+                (np.abs(cluster_points[:, 1] - center_y) < self.sub_box)
+            )
+            box_points = cluster_points[box_mask]
+
+            if len(box_points) < 30:
+                continue
+
+            b_size = box_points.max(axis=0) - box_points.min(axis=0)
+
+            if self.is_person_shape(b_size):
+                center = box_points.mean(axis=0)
+                person_centers.append(center)
+                seen_positions.append((center_x, center_y))
+
+        return person_centers
+
+    def publish_cluster_cloud(self, header, points_with_label):
+        cloud_header = Header()
+        cloud_header.stamp = header.stamp
+        cloud_header.frame_id = self.lidar_frame
         fields = [
-            PointField(name='x', offset=0, datatype=PointField.FLOAT32,
-                        count=1),
-            PointField(name='y', offset=4, datatype=PointField.FLOAT32,
-                        count=1),
-            PointField(name='z', offset=8, datatype=PointField.FLOAT32,
-                        count=1),
+            PointField(name='x', offset=0,
+                        datatype=PointField.FLOAT32, count=1),
+            PointField(name='y', offset=4,
+                        datatype=PointField.FLOAT32, count=1),
+            PointField(name='z', offset=8,
+                        datatype=PointField.FLOAT32, count=1),
             PointField(name='intensity', offset=12,
                         datatype=PointField.FLOAT32, count=1),
         ]
-
         cloud_msg = point_cloud2.create_cloud(
-            header, fields, pts_pub.tolist())
-        self.pub_debug_clusters.publish(cloud_msg)
+            cloud_header, fields, points_with_label.tolist())
+        self.pub_clusters.publish(cloud_msg)
 
 
 def main():

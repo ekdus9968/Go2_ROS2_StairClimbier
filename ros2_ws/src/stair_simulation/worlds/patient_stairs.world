@@ -602,10 +602,10 @@
       </link>
     </model>
     
-      <!-- Patient with collision, gravity disabled -->
+    <!-- Patient with collision, gravity disabled -->
     <model name="patient">
       <static>true</static>
-      <pose>-3.0 0 1.05 0 0 0</pose>
+      <pose>0.0 0 1.05 0 0 0</pose>
       <link name="body">
         <collision name="collision">
           <geometry>
@@ -623,6 +623,6 @@
         </visual>
       </link>
     </model>
-
+ 
   </world>
 </sdf>

@@ -15,16 +15,16 @@ particle_filter_node:
     
     # Motion noise (per step)
     # X, Y horizontal
-    pos_noise_xy: 0.05
+    pos_noise_xy: 0.03
     # Z vertical (smaller since stairs move slower vertically)
-    pos_noise_z: 0.02
+    pos_noise_z: 0.01
     # Velocity noise
-    vel_noise_xy: 0.10
-    vel_noise_z: 0.05
+    vel_noise_xy: 0.05
+    vel_noise_z: 0.02
     
     # Observation model
     # obs_sigma: expected measurement noise (m)
-    obs_sigma: 0.10
+    obs_sigma: 0.05
     # min_weight: robust min likelihood
     min_weight: 0.01
     
