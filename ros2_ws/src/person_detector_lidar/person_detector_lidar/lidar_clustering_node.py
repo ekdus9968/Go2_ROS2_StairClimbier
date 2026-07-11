@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """
-LiDAR Person Clustering Node with sub-region search.
+LiDAR Person Clustering Node with roll correction.
+
+Roll correction:
+- Roll: corrected (remove side-to-side wobble)
+- Pitch: preserved (natural robot posture)
+- Yaw: preserved (heading)
 
 Pipeline:
-1. Angle + distance filter
-2. Ground removal
-3. DBSCAN clustering
-4. For each cluster in valid distance range:
-   a. Check if cluster is a person by shape
-   b. If cluster too large, search for person sub-regions
-      using XY density grid + person-sized box
-5. Publish person candidates
+1. Roll correction
+2. Angle + distance filter
+3. Ground removal
+4. DBSCAN clustering
+5. Shape check + sub-region search
+6. Publish person candidates
 """
 
 import numpy as np
@@ -24,6 +27,9 @@ from sensor_msgs_py import point_cloud2
 from geometry_msgs.msg import PoseArray, Pose
 from std_msgs.msg import Header
 from sklearn.cluster import DBSCAN
+
+import tf2_ros
+from tf2_ros import TransformException
 
 
 class LidarClusteringNode(Node):
@@ -51,25 +57,27 @@ class LidarClusteringNode(Node):
         self.declare_parameter('human_depth_min', 0.15)
         self.declare_parameter('human_depth_max', 0.7)
 
-        # Sub-region search
+        # Sub-region
         self.declare_parameter('subregion_grid_size', 0.2)
         self.declare_parameter('subregion_min_points', 30)
         self.declare_parameter('subregion_top_k', 5)
         self.declare_parameter('subregion_box_size', 0.5)
         self.declare_parameter('cluster_large_threshold', 1.5)
 
+        # Roll correction
+        self.declare_parameter('use_roll_correction', True)
+        self.declare_parameter('base_frame', 'base')
+        self.declare_parameter('world_frame', 'world')
+
         # Frames
         self.declare_parameter('lidar_frame', 'hesai_link')
-        self.declare_parameter('world_frame', 'world')
 
         # Load
         self.angle_min = np.deg2rad(self.get_parameter('angle_min_deg').value)
         self.angle_max = np.deg2rad(self.get_parameter('angle_max_deg').value)
         self.dist_min = self.get_parameter('distance_min').value
         self.dist_max = self.get_parameter('distance_max').value
-
         self.ground_z = self.get_parameter('ground_z_threshold').value
-
         self.dbscan_eps = self.get_parameter('dbscan_epsilon').value
 
         self.h_min = self.get_parameter('human_height_min').value
@@ -85,7 +93,13 @@ class LidarClusteringNode(Node):
         self.sub_box = self.get_parameter('subregion_box_size').value
         self.large_thresh = self.get_parameter('cluster_large_threshold').value
 
+        self.use_roll = self.get_parameter('use_roll_correction').value
+        self.base_frame = self.get_parameter('base_frame').value
+        self.world_frame = self.get_parameter('world_frame').value
         self.lidar_frame = self.get_parameter('lidar_frame').value
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         qos = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
@@ -103,7 +117,8 @@ class LidarClusteringNode(Node):
             PointCloud2, '/lidar_clusters', 10)
 
         self.get_logger().info(
-            'Lidar Clustering Node (sub-region search) started')
+            f'Lidar Clustering Node started '
+            f'(roll correction: {self.use_roll})')
 
     def cloud_cb(self, msg: PointCloud2):
         arr = point_cloud2.read_points(
@@ -118,6 +133,13 @@ class LidarClusteringNode(Node):
         if len(points) < 100:
             return
 
+        # Roll correction
+        roll = 0.0
+        if self.use_roll:
+            corrected, roll = self.apply_roll_correction(points)
+            if corrected is not None:
+                points = corrected
+
         # STAGE 1
         angle = np.arctan2(points[:, 1], points[:, 0])
         dist = np.linalg.norm(points[:, :2], axis=1)
@@ -130,7 +152,8 @@ class LidarClusteringNode(Node):
         # STAGE 2
         points = self.remove_ground_plane(points)
         self.get_logger().info(
-            f'[STAGE2] After ground removal: {len(points)}')
+            f'[STAGE2] After ground removal: {len(points)} '
+            f'(roll={np.rad2deg(roll):.1f}°)')
         if len(points) < 30:
             return
 
@@ -160,7 +183,6 @@ class LidarClusteringNode(Node):
             if not (self.dist_min <= cluster_dist <= self.dist_max):
                 continue
 
-            # Direct shape check
             if self.is_person_shape(size):
                 self.get_logger().info('    ACCEPTED (direct)')
                 candidates.append(center)
@@ -168,7 +190,6 @@ class LidarClusteringNode(Node):
                 cluster_lbls_for_pub.extend([label] * len(cluster))
                 continue
 
-            # Sub-region search for large clusters
             is_large = (size[0] > self.w_max * self.large_thresh or
                          size[1] > self.d_max * self.large_thresh)
             if is_large:
@@ -187,7 +208,6 @@ class LidarClusteringNode(Node):
         self.get_logger().info(
             f'[STAGE4] Person candidates: {len(candidates)}')
 
-        # Publish
         if len(candidates) > 0:
             pose_array = PoseArray()
             pose_array.header.stamp = msg.header.stamp
@@ -203,20 +223,19 @@ class LidarClusteringNode(Node):
             self.get_logger().info(
                 f'Published {len(candidates)} candidate(s)')
 
-        # Publish clusters
         if len(cluster_pts_for_pub) > 0:
             all_pts = np.vstack(cluster_pts_for_pub)
             all_lbl = np.array(cluster_lbls_for_pub, dtype=np.float32)
             pts_with_label = np.column_stack((all_pts, all_lbl))
             self.publish_cluster_cloud(msg.header, pts_with_label)
 
-    def remove_ground_plane(self, points: np.ndarray) -> np.ndarray:
+    def remove_ground_plane(self, points):
         if len(points) < 10:
             return points
         mask = points[:, 2] > self.ground_z
         return points[mask]
 
-    def is_person_shape(self, size: np.ndarray) -> bool:
+    def is_person_shape(self, size):
         w, d, h = size
         if not (self.h_min <= h <= self.h_max):
             return False
@@ -226,8 +245,7 @@ class LidarClusteringNode(Node):
             return False
         return True
 
-    def find_person_subregions(self, cluster_points: np.ndarray) -> list:
-        """Find person-sized sub-regions in a large cluster."""
+    def find_person_subregions(self, cluster_points):
         x = cluster_points[:, 0]
         y = cluster_points[:, 1]
 
@@ -246,7 +264,6 @@ class LidarClusteringNode(Node):
             center_x = grid_x * self.sub_grid + self.sub_grid / 2
             center_y = grid_y * self.sub_grid + self.sub_grid / 2
 
-            # Skip near duplicates
             too_close = False
             for sx, sy in seen_positions:
                 if abs(sx - center_x) < 0.3 and abs(sy - center_y) < 0.3:
@@ -290,6 +307,51 @@ class LidarClusteringNode(Node):
         cloud_msg = point_cloud2.create_cloud(
             cloud_header, fields, points_with_label.tolist())
         self.pub_clusters.publish(cloud_msg)
+
+    # ==========================
+    # Roll correction
+    # ==========================
+    def apply_roll_correction(self, points):
+        """Apply inverse ROLL only (pitch and yaw preserved)."""
+        try:
+            tf = self.tf_buffer.lookup_transform(
+                self.world_frame, self.base_frame,
+                rclpy.time.Time(),
+                timeout=rclpy.duration.Duration(seconds=0.1))
+        except TransformException as e:
+            self.get_logger().warn(f'TF lookup failed: {e}', once=True)
+            return None, 0.0
+
+        q = tf.transform.rotation
+        roll, _, _ = self.quat_to_euler(q.x, q.y, q.z, q.w)
+
+        if abs(roll) < 0.01:
+            return points, roll
+
+        cr, sr = np.cos(-roll), np.sin(-roll)
+        Rx = np.array([
+            [1, 0, 0],
+            [0, cr, -sr],
+            [0, sr, cr]
+        ])
+        corrected = (Rx @ points.T).T
+        return corrected, roll
+
+    def quat_to_euler(self, x, y, z, w):
+        sinr_cosp = 2 * (w * x + y * z)
+        cosr_cosp = 1 - 2 * (x * x + y * y)
+        roll = np.arctan2(sinr_cosp, cosr_cosp)
+
+        sinp = 2 * (w * y - z * x)
+        if abs(sinp) >= 1:
+            pitch = np.copysign(np.pi / 2, sinp)
+        else:
+            pitch = np.arcsin(sinp)
+
+        siny_cosp = 2 * (w * z + x * y)
+        cosy_cosp = 1 - 2 * (y * y + z * z)
+        yaw = np.arctan2(siny_cosp, cosy_cosp)
+        return roll, pitch, yaw
 
 
 def main():
