@@ -30,15 +30,6 @@ Person Detection Pipeline          Stair Detection Pipeline
 
 ---
 
-## Key Contributions
-
-- **Sub-region search clustering** — recovers person position from over-merged DBSCAN clusters where person and stair points fuse into a single cluster
-- **Partial-visibility mode classifier** — explicit `full_body` / `lower_body_only` / `torso_only` detection modes handle the occlusion patterns typical of vertical navigation
-- **Predictive tracking-planning integration** — particle filter predictions of future person positions feed directly into the MPPI cost function for anticipatory following
-- **IMU-based roll correction** — stabilizes LiDAR data during robot locomotion while preserving pitch for natural stair-climbing posture
-
----
-
 ## Hardware
 
 | Component | Model | Purpose |
